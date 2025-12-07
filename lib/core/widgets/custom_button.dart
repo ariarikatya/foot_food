@@ -1,0 +1,102 @@
+import 'package:flutter/material.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_spacing.dart';
+import '../constants/app_text_styles.dart';
+
+/// Кастомная кнопка приложения
+class CustomButton extends StatelessWidget {
+  final String text;
+  final VoidCallback? onPressed;
+  final bool isOutlined;
+  final bool isLoading;
+  final double? width;
+  final double? height;
+  final IconData? icon;
+
+  const CustomButton({
+    super.key,
+    required this.text,
+    this.onPressed,
+    this.isOutlined = false,
+    this.isLoading = false,
+    this.width,
+    this.height,
+    this.icon,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: width,
+      height: height ?? AppSpacing.buttonHeight,
+      child: isOutlined ? _buildOutlinedButton() : _buildFilledButton(),
+    );
+  }
+
+  Widget _buildFilledButton() {
+    return ElevatedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: ElevatedButton.styleFrom(
+        backgroundColor: AppColors.primary,
+        foregroundColor: AppColors.textWhite,
+        disabledBackgroundColor: AppColors.primary.withOpacity(0.5),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        ),
+        elevation: 0,
+        shadowColor: AppColors.transparent,
+      ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildOutlinedButton() {
+    return OutlinedButton(
+      onPressed: isLoading ? null : onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: AppColors.primary,
+        side: const BorderSide(color: AppColors.border, width: 2),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        ),
+      ),
+      child: _buildButtonContent(),
+    );
+  }
+
+  Widget _buildButtonContent() {
+    if (isLoading) {
+      return const SizedBox(
+        width: 24,
+        height: 24,
+        child: CircularProgressIndicator(
+          strokeWidth: 2,
+          valueColor: AlwaysStoppedAnimation<Color>(AppColors.textWhite),
+        ),
+      );
+    }
+
+    if (icon != null) {
+      return Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: AppSpacing.iconSm),
+          const SizedBox(width: AppSpacing.sm),
+          Text(
+            text,
+            style: isOutlined
+                ? AppTextStyles.button.copyWith(color: AppColors.primary)
+                : AppTextStyles.button,
+          ),
+        ],
+      );
+    }
+
+    return Text(
+      text,
+      style: isOutlined
+          ? AppTextStyles.button.copyWith(color: AppColors.primary)
+          : AppTextStyles.button,
+    );
+  }
+}
