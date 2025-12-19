@@ -13,11 +13,8 @@ dependencies:
   # HTTP клиент для работы с API
   http: ^1.2.0
 
-  # Управление состоянием (можно использовать позже)
-  # provider: ^6.1.0
-
-  # Хранение данных локально
-  # shared_preferences: ^2.2.0
+  # SVG поддержка
+  flutter_svg: ^2.0.9
 
 dev_dependencies:
   flutter_test:
@@ -33,6 +30,15 @@ flutter:
     - assets/images/placeholder_food.png
     - assets/images/placeholder_restaurant.png
     - assets/images/logo.png
+    - assets/images/logodark.png
+    - assets/images/splash.png
+    - assets/images/reg:auth.png
+    - assets/images/regcli.png
+    - assets/images/regsell.png
+    - assets/images/auth.png
+    - assets/images/Vector.svg
+    - assets/images/icon people.svg
+    - assets/images/icon coin.svg
 
   # Шрифты
   fonts:

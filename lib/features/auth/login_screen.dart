@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
@@ -36,56 +37,47 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            _buildDecorativeElements(),
-
-            Column(
-              children: [
-                _buildAppBar(),
-                Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.all(AppSpacing.lg),
-                    child: Form(
-                      key: _formKey,
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          const SizedBox(height: AppSpacing.xl),
-
-                          _buildHeader(),
-
-                          const SizedBox(height: AppSpacing.xl),
-
-                          _buildPhoneField(),
-
-                          const SizedBox(height: AppSpacing.md),
-
-                          _buildPasswordField(),
-
-                          const SizedBox(height: AppSpacing.sm),
-
-                          _buildForgotPassword(),
-
-                          const SizedBox(height: AppSpacing.xl),
-
-                          _buildLoginButton(),
-
-                          const SizedBox(height: AppSpacing.lg),
-
-                          _buildRegisterLink(),
-
-                          const SizedBox(height: AppSpacing.lg),
-                        ],
-                      ),
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/auth.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: AppSpacing.xl),
+                        _buildHeader(),
+                        const SizedBox(height: AppSpacing.xl),
+                        _buildPhoneField(),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildPasswordField(),
+                        const SizedBox(height: AppSpacing.sm),
+                        _buildForgotPassword(),
+                        const SizedBox(height: AppSpacing.xl),
+                        _buildLoginButton(),
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildRegisterLink(),
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
                     ),
                   ),
                 ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -96,9 +88,24 @@ class _LoginScreenState extends State<LoginScreen> {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-            onPressed: () => Navigator.of(context).pop(),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: SvgPicture.asset(
+              'assets/images/Vector.svg',
+              width: 24,
+              height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+            ),
+          ),
+          const Spacer(),
+          Image.asset(
+            'assets/images/logodark.png',
+            width: 60,
+            height: 60,
+            fit: BoxFit.contain,
           ),
         ],
       ),
@@ -108,24 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          'Foot',
-          style: AppTextStyles.h1.copyWith(
-            fontSize: 40,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        Text(
-          'Food',
-          style: AppTextStyles.h1.copyWith(
-            fontSize: 40,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        const SizedBox(height: AppSpacing.sm),
-        Text('Авторизация покупателя', style: AppTextStyles.h3),
-      ],
+      children: [Text('Авторизация покупателя', style: AppTextStyles.h2)],
     );
   }
 
@@ -213,25 +203,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildDecorativeElements() {
-    return Stack(
-      children: [
-        Positioned(
-          bottom: -100,
-          right: -80,
-          child: Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              color: AppColors.accent.withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
@@ -15,8 +16,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-
-  // Тип пользователя: true - покупатель, false - продавец
   bool _isBuyer = true;
 
   // Контроллеры для покупателя
@@ -61,7 +60,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         );
         return;
       }
-      // Здесь логика регистрации
       Navigator.of(context).pushReplacementNamed('/home');
     }
   }
@@ -81,47 +79,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  String get _backgroundImage {
+    return _isBuyer ? 'assets/images/regcli.png' : 'assets/images/regsell.png';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
-        child: Column(
-          children: [
-            _buildAppBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.all(AppSpacing.lg),
-                child: Form(
-                  key: _formKey,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: AppSpacing.lg),
-
-                      _buildHeader(),
-
-                      const SizedBox(height: AppSpacing.xl),
-
-                      // Динамическое содержимое в зависимости от типа
-                      _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
-
-                      const SizedBox(height: AppSpacing.xl),
-
-                      _buildRegisterButton(),
-
-                      const SizedBox(height: AppSpacing.md),
-
-                      _buildTermsCheckbox(),
-
-                      const SizedBox(height: AppSpacing.lg),
-                    ],
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage(_backgroundImage),
+            fit: BoxFit.cover,
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.all(AppSpacing.lg),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: AppSpacing.lg),
+                        _buildHeader(),
+                        const SizedBox(height: AppSpacing.xl),
+                        _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
+                        const SizedBox(height: AppSpacing.xl),
+                        _buildRegisterButton(),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildTermsCheckbox(),
+                        const SizedBox(height: AppSpacing.lg),
+                      ],
+                    ),
                   ),
                 ),
               ),
-            ),
-            _buildBottomNavigationBar(),
-          ],
+              _buildBottomNavigationBar(),
+            ],
+          ),
         ),
       ),
     );
@@ -132,15 +134,24 @@ class _RegisterScreenState extends State<RegisterScreen> {
       padding: const EdgeInsets.all(AppSpacing.md),
       child: Row(
         children: [
-          IconButton(
-            icon: const Icon(Icons.arrow_back, color: AppColors.primary),
-            onPressed: () => Navigator.of(context).pop(),
+          GestureDetector(
+            onTap: () => Navigator.of(context).pop(),
+            child: SvgPicture.asset(
+              'assets/images/Vector.svg',
+              width: 24,
+              height: 24,
+              colorFilter: const ColorFilter.mode(
+                AppColors.primary,
+                BlendMode.srcIn,
+              ),
+            ),
           ),
           const Spacer(),
-          Text(
-            'Foot\nFood',
-            style: AppTextStyles.h3.copyWith(height: 1.2),
-            textAlign: TextAlign.right,
+          Image.asset(
+            'assets/images/logodark.png',
+            width: 60,
+            height: 60,
+            fit: BoxFit.contain,
           ),
         ],
       ),
@@ -153,8 +164,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       style: AppTextStyles.h2,
     );
   }
-
-  // ========== ФОРМА ПОКУПАТЕЛЯ ==========
 
   Widget _buildBuyerForm() {
     return Column(
@@ -180,8 +189,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ],
     );
   }
-
-  // ========== ФОРМА ПРОДАВЦА ==========
 
   Widget _buildSellerForm() {
     return Column(
@@ -214,8 +221,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  // ========== ПОЛЯ ВВОДА ==========
-
   Widget _buildPhoneField() {
     return CustomTextField(
       controller: _phoneController,
@@ -225,7 +230,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
         if (value == null || value.isEmpty) {
           return 'Введите номер телефона';
         }
-        // Убираем все нецифровые символы
         final digits = value.replaceAll(RegExp(r'\D'), '');
         if (digits.length < 11) {
           return 'Номер должен содержать 11 цифр';
@@ -284,7 +288,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
           decoration: BoxDecoration(
             color: AppColors.primary,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusMd),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
           ),
           child: const Text(
             'Карта',
@@ -310,14 +314,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
       controller: _logoController,
       hintText: 'Логотип',
       readOnly: true,
-      onTap: () {
-        // TODO: Загрузить логотип
-      },
+      onTap: () {},
       suffixIcon: IconButton(
         icon: const Icon(Icons.attach_file, color: AppColors.primary),
-        onPressed: () {
-          // TODO: Загрузить логотип
-        },
+        onPressed: () {},
       ),
     );
   }
@@ -370,7 +370,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
               return 'Повторите пароль';
             }
             if (value != passwordController.text) {
-              return null; // Не показываем ошибку здесь
+              return null;
             }
             return null;
           },
@@ -442,19 +442,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   Widget _buildBottomNavigationBar() {
     return Container(
-      height: 70,
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(AppSpacing.radiusLg),
-          topRight: Radius.circular(AppSpacing.radiusLg),
+      height: 80,
+      decoration: BoxDecoration(
+        color: AppColors.bottomNavBar,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(30),
+          topRight: Radius.circular(30),
         ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _buildNavItem(
-            icon: Icons.person,
+            iconPath: 'assets/images/icon people.svg',
             isSelected: _isBuyer,
             onTap: () {
               setState(() {
@@ -463,7 +463,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
             },
           ),
           _buildNavItem(
-            icon: Icons.restaurant,
+            iconPath: 'assets/images/icon coin.svg',
             isSelected: !_isBuyer,
             onTap: () {
               setState(() {
@@ -477,30 +477,34 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildNavItem({
-    required IconData icon,
+    required String iconPath,
     required bool isSelected,
     required VoidCallback onTap,
   }) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 60,
-        height: 60,
+        width: 70,
+        height: 70,
         decoration: BoxDecoration(
           color: isSelected ? AppColors.backgroundWhite : Colors.transparent,
-          shape: BoxShape.circle,
+          borderRadius: BorderRadius.circular(20),
         ),
-        child: Icon(
-          icon,
-          color: isSelected ? AppColors.primary : AppColors.textWhite,
-          size: 30,
+        child: Center(
+          child: SvgPicture.asset(
+            iconPath,
+            width: 35,
+            height: 35,
+            colorFilter: ColorFilter.mode(
+              isSelected ? AppColors.primary : AppColors.textWhite,
+              BlendMode.srcIn,
+            ),
+          ),
         ),
       ),
     );
   }
 }
-
-// ========== ЭКРАН КАРТЫ ДЛЯ ВЫБОРА АДРЕСА ==========
 
 class _AddressMapScreen extends StatefulWidget {
   final Function(String) onAddressSelected;
@@ -519,7 +523,6 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          // Карта (заглушка)
           Container(
             color: Colors.grey[300],
             child: Center(
@@ -543,13 +546,9 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
               ),
             ),
           ),
-
-          // Маркер в центре
           const Center(
             child: Icon(Icons.location_on, size: 50, color: AppColors.primary),
           ),
-
-          // Кнопка назад
           Positioned(
             top: 60,
             left: AppSpacing.lg,
@@ -571,8 +570,6 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
               ),
             ),
           ),
-
-          // Кнопка центрирования
           Positioned(
             top: 60,
             right: AppSpacing.lg,
@@ -590,14 +587,10 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
               ),
               child: IconButton(
                 icon: const Icon(Icons.my_location, color: AppColors.primary),
-                onPressed: () {
-                  // TODO: Центрировать на текущей геолокации
-                },
+                onPressed: () {},
               ),
             ),
           ),
-
-          // Нижняя панель с адресом
           Positioned(
             bottom: 0,
             left: 0,
@@ -607,8 +600,8 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
               decoration: const BoxDecoration(
                 color: AppColors.backgroundWhite,
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(AppSpacing.radiusLg),
-                  topRight: Radius.circular(AppSpacing.radiusLg),
+                  topLeft: Radius.circular(30),
+                  topRight: Radius.circular(30),
                 ),
               ),
               child: SafeArea(
