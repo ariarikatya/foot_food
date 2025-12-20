@@ -6,7 +6,36 @@ import '../models/card_model.dart';
 import '../models/order_history_model.dart';
 
 /// Mock-сервис для тестирования без сервера
+///
+/// ТЕСТОВЫЕ ПОЛЬЗОВАТЕЛИ:
+///
+/// ПОКУПАТЕЛЬ:
+/// Телефон: +71234567890
+/// Пароль: test123
+///
+/// ПРОДАВЕЦ:
+/// Email: seller@test.com
+/// Пароль: seller123
 class MockApiService {
+  // Тестовые данные
+  static final _testBuyer = UserModel(
+    id: 1,
+    phone: '+71234567890',
+    password: 'test123',
+    city: 'Пермь',
+  );
+
+  static final _testSeller = SellerModel(
+    id: 1,
+    email: 'seller@test.com',
+    nameRestaurant: 'Тестовый ресторан',
+    address: 'Пермь, ул. Революции, 13',
+    password: 'seller123',
+    statusOrder: 'active',
+    inn: 123456789,
+    ogrn: 987654321,
+  );
+
   // Имитация задержки сети
   Future<void> _simulateDelay() async {
     await Future.delayed(const Duration(seconds: 1));
@@ -20,7 +49,18 @@ class MockApiService {
     String? city,
   }) async {
     await _simulateDelay();
-    return UserModel(id: 1, phone: phone, password: password, city: city);
+
+    // Проверка на существующего пользователя
+    if (phone == _testBuyer.phone) {
+      throw Exception('Пользователь с таким номером уже существует');
+    }
+
+    return UserModel(
+      id: DateTime.now().millisecondsSinceEpoch,
+      phone: phone,
+      password: password,
+      city: city,
+    );
   }
 
   Future<Map<String, dynamic>> loginUser({
@@ -28,25 +68,23 @@ class MockApiService {
     required String password,
   }) async {
     await _simulateDelay();
-    return {
-      'user': UserModel(
-        id: 1,
-        phone: phone,
-        password: password,
-        city: 'Warsaw',
-      ),
-      'token': 'mock_token_12345',
-    };
+
+    // Проверка тестового пользователя
+    if (phone == _testBuyer.phone && password == _testBuyer.password) {
+      return {'user': _testBuyer, 'token': 'mock_token_${_testBuyer.id}'};
+    }
+
+    throw Exception('Неверный телефон или пароль');
   }
 
   Future<UserModel> getUserProfile(int userId) async {
     await _simulateDelay();
-    return UserModel(
-      id: userId,
-      phone: '+48123456789',
-      password: 'hashed_password',
-      city: 'Warsaw',
-    );
+
+    if (userId == _testBuyer.id) {
+      return _testBuyer;
+    }
+
+    throw Exception('Пользователь не найден');
   }
 
   // ============= ПРОДАВЦЫ (Sellers) =============
@@ -62,8 +100,14 @@ class MockApiService {
     String? photos,
   }) async {
     await _simulateDelay();
+
+    // Проверка на существующего продавца
+    if (email == _testSeller.email) {
+      throw Exception('Продавец с таким email уже существует');
+    }
+
     return SellerModel(
-      id: 1,
+      id: DateTime.now().millisecondsSinceEpoch,
       email: email,
       nameRestaurant: nameRestaurant,
       address: address,
@@ -82,19 +126,16 @@ class MockApiService {
     required String password,
   }) async {
     await _simulateDelay();
-    return {
-      'seller': SellerModel(
-        id: 1,
-        email: email,
-        nameRestaurant: 'Test Restaurant',
-        address: 'Warsaw, Test Street 1',
-        password: password,
-        statusOrder: 'active',
-        inn: 123456789,
-        ogrn: 987654321,
-      ),
-      'token': 'mock_seller_token_12345',
-    };
+
+    // Проверка тестового продавца
+    if (email == _testSeller.email && password == _testSeller.password) {
+      return {
+        'seller': _testSeller,
+        'token': 'mock_seller_token_${_testSeller.id}',
+      };
+    }
+
+    throw Exception('Неверный email или пароль');
   }
 
   // ============= ЗАКАЗЫ (Orders) =============

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_spacing.dart';
-import '../constants/app_text_styles.dart';
 
 /// Кастомное текстовое поле
 class CustomTextField extends StatelessWidget {
@@ -48,12 +47,27 @@ class CustomTextField extends StatelessWidget {
       readOnly: readOnly,
       maxLines: maxLines,
       enabled: enabled,
-      style: AppTextStyles.input,
+      style: const TextStyle(
+        fontSize: 22,
+        fontWeight: FontWeight.w400, // Montserrat Regular
+        color: Color(0xFF1A1C1B),
+        fontFamily: 'Montserrat',
+      ),
       decoration: InputDecoration(
         hintText: hintText,
         labelText: labelText,
-        hintStyle: AppTextStyles.inputLabel,
-        labelStyle: AppTextStyles.inputLabel,
+        hintStyle: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1A1C1B),
+          fontFamily: 'Montserrat',
+        ),
+        labelStyle: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1A1C1B),
+          fontFamily: 'Montserrat',
+        ),
         prefixIcon: prefixIcon,
         suffixIcon: suffixIcon,
         filled: true,

@@ -5,6 +5,7 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../data/services/mock_api_service.dart';
 
 /// Экран авторизации
 class LoginScreen extends StatefulWidget {
@@ -16,9 +17,11 @@ class LoginScreen extends StatefulWidget {
 
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _apiService = MockApiService();
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,10 +30,34 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  void _handleLogin() {
+  Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Здесь логика авторизации
-      Navigator.of(context).pushReplacementNamed('/home');
+      setState(() => _isLoading = true);
+
+      try {
+        // Тестовые данные: телефон +71234567890, пароль: test123
+        final result = await _apiService.loginUser(
+          phone: _phoneController.text,
+          password: _passwordController.text,
+        );
+
+        if (mounted) {
+          Navigator.of(context).pushReplacementNamed('/buyer_home');
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ошибка авторизации: $e'),
+              backgroundColor: AppColors.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
     }
   }
 
@@ -103,8 +130,8 @@ class _LoginScreenState extends State<LoginScreen> {
           const Spacer(),
           Image.asset(
             'assets/images/logodark.png',
-            width: 60,
-            height: 60,
+            width: 223,
+            height: 128,
             fit: BoxFit.contain,
           ),
         ],
@@ -127,9 +154,6 @@ class _LoginScreenState extends State<LoginScreen> {
       validator: (value) {
         if (value == null || value.isEmpty) {
           return 'Введите номер телефона';
-        }
-        if (value.length < 10) {
-          return 'Неверный формат номера';
         }
         return null;
       },
@@ -180,17 +204,22 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildLoginButton() {
-    return CustomButton(text: 'Войти', onPressed: _handleLogin);
+    return CustomButton(
+      text: 'Войти',
+      onPressed: _isLoading ? null : _handleLogin,
+      isLoading: _isLoading,
+    );
   }
 
   Widget _buildRegisterLink() {
     return Center(
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text('Еще нет аккаунта? Тогда', style: AppTextStyles.bodyMedium),
-          TextButton(
-            onPressed: () {
+          Text('Еще нет аккаунта? Тогда ', style: AppTextStyles.bodyMedium),
+          GestureDetector(
+            onTap: () {
               Navigator.of(context).pushReplacementNamed('/register');
             },
             child: Text(

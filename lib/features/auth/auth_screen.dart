@@ -27,11 +27,11 @@ class AuthScreen extends StatelessWidget {
               children: [
                 const Spacer(),
 
-                // Логотип
+                // Логотип 223x128
                 Image.asset(
                   'assets/images/logodark.png',
-                  width: 150,
-                  height: 150,
+                  width: 223,
+                  height: 128,
                   fit: BoxFit.contain,
                 ),
 
@@ -40,6 +40,8 @@ class AuthScreen extends StatelessWidget {
                 // Кнопки регистрации
                 CustomButton(
                   text: 'Регистрация',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500, // Montserrat Medium
                   onPressed: () {
                     Navigator.of(context).pushNamed('/register');
                   },
@@ -49,6 +51,8 @@ class AuthScreen extends StatelessWidget {
 
                 CustomButton(
                   text: 'Авторизация',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500, // Montserrat Medium
                   isOutlined: true,
                   onPressed: () {
                     Navigator.of(context).pushNamed('/login');

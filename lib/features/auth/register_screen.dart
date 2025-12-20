@@ -5,8 +5,8 @@ import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
+import '../../data/services/mock_api_service.dart';
 
-/// Единый экран регистрации с переключением типа пользователя
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
 
@@ -16,24 +16,25 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  bool _isBuyer = true;
+  final _apiService = MockApiService();
 
-  // Контроллеры для покупателя
+  bool _isBuyer = true;
+  bool _isLoading = false;
+  bool _agreedToTerms = false;
+
+  bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
+
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
 
-  // Контроллеры для продавца
   final _emailController = TextEditingController();
   final _restaurantNameController = TextEditingController();
   final _addressController = TextEditingController();
   final _logoController = TextEditingController();
   final _sellerPasswordController = TextEditingController();
   final _sellerConfirmPasswordController = TextEditingController();
-
-  bool _obscurePassword = true;
-  bool _obscureConfirmPassword = true;
-  bool _agreedToTerms = false;
 
   @override
   void dispose() {
@@ -49,39 +50,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
     super.dispose();
   }
 
-  void _handleRegister() {
-    if (_formKey.currentState?.validate() ?? false) {
-      if (!_agreedToTerms) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Пожалуйста, согласитесь с условиями'),
-            backgroundColor: AppColors.error,
-          ),
-        );
-        return;
-      }
-      Navigator.of(context).pushReplacementNamed('/home');
-    }
-  }
-
-  void _openMapForAddress() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => _AddressMapScreen(
-          onAddressSelected: (address) {
-            setState(() {
-              _addressController.text = address;
-            });
-          },
-        ),
-      ),
-    );
-  }
-
-  String get _backgroundImage {
-    return _isBuyer ? 'assets/images/regcli.png' : 'assets/images/regsell.png';
-  }
+  String get _backgroundImage =>
+      _isBuyer ? 'assets/images/regcli.png' : 'assets/images/regsell.png';
 
   @override
   Widget build(BuildContext context) {
@@ -96,32 +66,51 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         child: SafeArea(
-          child: Column(
+          bottom: false,
+          child: Stack(
             children: [
-              _buildAppBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: AppSpacing.lg),
-                        _buildHeader(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
-                        const SizedBox(height: AppSpacing.xl),
-                        _buildRegisterButton(),
-                        const SizedBox(height: AppSpacing.md),
-                        _buildTermsCheckbox(),
-                        const SizedBox(height: AppSpacing.lg),
-                      ],
+              Column(
+                children: [
+                  _buildAppBar(),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(AppSpacing.lg),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: AppSpacing.lg),
+                            Text(
+                              _isBuyer
+                                  ? 'Регистрация для покупателя'
+                                  : 'Регистрация для продавца',
+                              style: AppTextStyles.h2,
+                            ),
+                            const SizedBox(height: AppSpacing.xl),
+                            _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
+                            const SizedBox(height: AppSpacing.xl),
+                            CustomButton(
+                              text: 'Зарегистрироваться',
+                              onPressed: _isLoading ? null : _handleRegister,
+                              isLoading: _isLoading,
+                            ),
+                            const SizedBox(height: AppSpacing.md),
+                            _buildTermsCheckbox(),
+                            const SizedBox(height: 160),
+                          ],
+                        ),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ),
-              _buildBottomNavigationBar(),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _buildBottomNavigationBar(),
+              ),
             ],
           ),
         ),
@@ -149,8 +138,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           const Spacer(),
           Image.asset(
             'assets/images/logodark.png',
-            width: 60,
-            height: 60,
+            width: _isBuyer ? 223 : 71,
+            height: _isBuyer ? 128 : 41,
             fit: BoxFit.contain,
           ),
         ],
@@ -158,34 +147,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
-  Widget _buildHeader() {
-    return Text(
-      _isBuyer ? 'Регистрация для покупателя' : 'Регистрация для продовца',
-      style: AppTextStyles.h2,
-    );
-  }
-
   Widget _buildBuyerForm() {
     return Column(
       children: [
-        _buildPhoneField(),
-        const SizedBox(height: AppSpacing.md),
-        _buildPasswordField(
-          controller: _passwordController,
-          hintText: 'Пароль',
-          obscureText: _obscurePassword,
-          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+        CustomTextField(
+          controller: _phoneController,
+          hintText: '+7 (   )  -  -',
+          keyboardType: TextInputType.phone,
+          validator: (v) =>
+              v == null || v.isEmpty ? 'Введите номер телефона' : null,
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildConfirmPasswordField(
-          controller: _confirmPasswordController,
-          passwordController: _passwordController,
-          hintText: 'Павтор пароля',
-          obscureText: _obscureConfirmPassword,
-          onToggle: () => setState(
-            () => _obscureConfirmPassword = !_obscureConfirmPassword,
-          ),
-        ),
+        _passwordField(_passwordController),
+        const SizedBox(height: AppSpacing.md),
+        _confirmPasswordField(_confirmPasswordController, _passwordController),
       ],
     );
   }
@@ -193,290 +168,93 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildSellerForm() {
     return Column(
       children: [
-        _buildEmailField(),
-        const SizedBox(height: AppSpacing.md),
-        _buildRestaurantNameField(),
-        const SizedBox(height: AppSpacing.md),
-        _buildAddressField(),
-        const SizedBox(height: AppSpacing.md),
-        _buildLogoField(),
-        const SizedBox(height: AppSpacing.md),
-        _buildPasswordField(
-          controller: _sellerPasswordController,
-          hintText: 'Пароль',
-          obscureText: _obscurePassword,
-          onToggle: () => setState(() => _obscurePassword = !_obscurePassword),
+        CustomTextField(
+          controller: _emailController,
+          hintText: 'Email',
+          keyboardType: TextInputType.emailAddress,
+          validator: (v) =>
+              v != null && v.contains('@') ? null : 'Неверный email',
         ),
         const SizedBox(height: AppSpacing.md),
-        _buildConfirmPasswordField(
-          controller: _sellerConfirmPasswordController,
-          passwordController: _sellerPasswordController,
-          hintText: 'Павтор пароля',
-          obscureText: _obscureConfirmPassword,
-          onToggle: () => setState(
-            () => _obscureConfirmPassword = !_obscureConfirmPassword,
-          ),
+        CustomTextField(
+          controller: _restaurantNameController,
+          hintText: 'Название ресторана',
+          validator: (v) =>
+              v != null && v.length >= 6 ? null : 'Минимум 6 символов',
+        ),
+        const SizedBox(height: AppSpacing.md),
+        CustomTextField(
+          controller: _addressController,
+          hintText: 'Добавить адрес',
+          readOnly: true,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        CustomTextField(
+          controller: _logoController,
+          hintText: 'Логотип',
+          readOnly: true,
+        ),
+        const SizedBox(height: AppSpacing.md),
+        _passwordField(_sellerPasswordController),
+        const SizedBox(height: AppSpacing.md),
+        _confirmPasswordField(
+          _sellerConfirmPasswordController,
+          _sellerPasswordController,
         ),
       ],
     );
   }
 
-  Widget _buildPhoneField() {
-    return CustomTextField(
-      controller: _phoneController,
-      hintText: '+7 (   )  -  -',
-      keyboardType: TextInputType.phone,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите номер телефона';
-        }
-        final digits = value.replaceAll(RegExp(r'\D'), '');
-        if (digits.length < 11) {
-          return 'Номер должен содержать 11 цифр';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildEmailField() {
-    return CustomTextField(
-      controller: _emailController,
-      hintText: 'Email',
-      keyboardType: TextInputType.emailAddress,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите email';
-        }
-        if (!value.contains('@')) {
-          return 'Неверный формат email';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildRestaurantNameField() {
-    return CustomTextField(
-      controller: _restaurantNameController,
-      hintText: 'Asdfg',
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите название ресторана';
-        }
-        if (value.length < 6) {
-          return 'Минимум 6 символов';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildAddressField() {
-    return CustomTextField(
-      controller: _addressController,
-      hintText: 'Добавить адрес',
-      readOnly: true,
-      onTap: _openMapForAddress,
-      suffixIcon: GestureDetector(
-        onTap: _openMapForAddress,
-        child: Container(
-          margin: const EdgeInsets.all(AppSpacing.sm),
-          padding: const EdgeInsets.symmetric(
-            horizontal: AppSpacing.md,
-            vertical: AppSpacing.sm,
-          ),
-          decoration: BoxDecoration(
-            color: AppColors.primary,
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          ),
-          child: const Text(
-            'Карта',
-            style: TextStyle(
-              color: AppColors.textWhite,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ),
-      ),
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Выберите адрес на карте';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildLogoField() {
-    return CustomTextField(
-      controller: _logoController,
-      hintText: 'Логотип',
-      readOnly: true,
-      onTap: () {},
-      suffixIcon: IconButton(
-        icon: const Icon(Icons.attach_file, color: AppColors.primary),
-        onPressed: () {},
-      ),
-    );
-  }
-
-  Widget _buildPasswordField({
-    required TextEditingController controller,
-    required String hintText,
-    required bool obscureText,
-    required VoidCallback onToggle,
-  }) {
+  Widget _passwordField(TextEditingController controller) {
     return CustomTextField(
       controller: controller,
-      hintText: hintText,
-      obscureText: obscureText,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите пароль';
-        }
-        if (value.length < 6) {
-          return 'Минимум 6 символов';
-        }
-        return null;
-      },
+      hintText: 'Пароль',
+      obscureText: _obscurePassword,
       suffixIcon: IconButton(
         icon: Icon(
-          obscureText ? Icons.visibility_off : Icons.visibility,
+          _obscurePassword ? Icons.visibility_off : Icons.visibility,
           color: AppColors.textSecondary,
         ),
-        onPressed: onToggle,
+        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
       ),
     );
   }
 
-  Widget _buildConfirmPasswordField({
-    required TextEditingController controller,
-    required TextEditingController passwordController,
-    required String hintText,
-    required bool obscureText,
-    required VoidCallback onToggle,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CustomTextField(
-          controller: controller,
-          hintText: hintText,
-          obscureText: obscureText,
-          validator: (value) {
-            if (value == null || value.isEmpty) {
-              return 'Повторите пароль';
-            }
-            if (value != passwordController.text) {
-              return null;
-            }
-            return null;
-          },
-          suffixIcon: IconButton(
-            icon: Icon(
-              obscureText ? Icons.visibility_off : Icons.visibility,
-              color: AppColors.textSecondary,
-            ),
-            onPressed: onToggle,
-          ),
+  Widget _confirmPasswordField(
+    TextEditingController controller,
+    TextEditingController original,
+  ) {
+    return CustomTextField(
+      controller: controller,
+      hintText: 'Повтор пароля',
+      obscureText: _obscureConfirmPassword,
+      suffixIcon: IconButton(
+        icon: Icon(
+          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+          color: AppColors.textSecondary,
         ),
-        if (controller.text.isNotEmpty &&
-            controller.text != passwordController.text)
-          Padding(
-            padding: const EdgeInsets.only(
-              top: AppSpacing.sm,
-              left: AppSpacing.md,
-            ),
-            child: Text(
-              'Пароли не совпадают',
-              style: AppTextStyles.bodySmall.copyWith(color: AppColors.error),
-            ),
-          ),
-      ],
+        onPressed: () =>
+            setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+      ),
     );
-  }
-
-  Widget _buildRegisterButton() {
-    return CustomButton(text: 'Зарегистрироваться', onPressed: _handleRegister);
   }
 
   Widget _buildTermsCheckbox() {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        SizedBox(
-          width: 24,
-          height: 24,
-          child: Checkbox(
-            value: _agreedToTerms,
-            onChanged: (value) {
-              setState(() {
-                _agreedToTerms = value ?? false;
-              });
-            },
-            activeColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(4),
-            ),
-          ),
+        Checkbox(
+          value: _agreedToTerms,
+          onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+          activeColor: AppColors.primary,
         ),
-        const SizedBox(width: AppSpacing.sm),
         Expanded(
-          child: GestureDetector(
-            onTap: () {
-              setState(() {
-                _agreedToTerms = !_agreedToTerms;
-              });
-            },
-            child: Text(
-              'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности и условиями пользовательского соглашения',
-              style: AppTextStyles.bodySmall.copyWith(height: 1.4),
-            ),
-          ),
+          child: Text('Согласен с условиями', style: AppTextStyles.bodySmall),
         ),
       ],
     );
   }
 
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: BoxDecoration(
-        color: AppColors.bottomNavBar,
-        borderRadius: const BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(
-            iconPath: 'assets/images/icon people.svg',
-            isSelected: _isBuyer,
-            onTap: () {
-              setState(() {
-                _isBuyer = true;
-              });
-            },
-          ),
-          _buildNavItem(
-            iconPath: 'assets/images/icon coin.svg',
-            isSelected: !_isBuyer,
-            onTap: () {
-              setState(() {
-                _isBuyer = false;
-              });
-            },
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildNavItem({
+  Widget _buildFloatingNavItem({
     required String iconPath,
     required bool isSelected,
     required VoidCallback onTap,
@@ -487,16 +265,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
         width: 70,
         height: 70,
         decoration: BoxDecoration(
-          color: isSelected ? AppColors.backgroundWhite : Colors.transparent,
-          borderRadius: BorderRadius.circular(20),
+          color: AppColors.bottomNavBar,
+          shape: BoxShape.circle,
+          boxShadow: isSelected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: SvgPicture.asset(
             iconPath,
             width: 35,
             height: 35,
-            colorFilter: ColorFilter.mode(
-              isSelected ? AppColors.primary : AppColors.textWhite,
+            colorFilter: const ColorFilter.mode(
+              AppColors.textWhite,
               BlendMode.srcIn,
             ),
           ),
@@ -504,19 +292,230 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
+
+  Widget _buildBottomNavigationBar() {
+    final media = MediaQuery.of(context);
+    final width = media.size.width;
+    final bottomInset = media.padding.bottom;
+
+    const double barHeight = 113;
+    const double circleSize = 85;
+    const double circleOverlap = 36;
+
+    return SizedBox(
+      height: barHeight + bottomInset + 50, // место под текст
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // ФОН С ВЫЕМКОЙ
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: ClipPath(
+              clipper: BottomNavClipper(isLeft: _isBuyer),
+              child: Container(
+                height: barHeight,
+                color: AppColors.bottomNavBar,
+                padding: EdgeInsets.only(bottom: bottomInset + 12),
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Text(
+                      'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности и условиями пользовательского соглашения',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 8,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF7FA29A),
+                        height: 1.3,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+
+          // ЛЕВЫЙ КРУГ
+          Positioned(
+            left: width * 0.25 - circleSize / 2,
+            bottom: barHeight - circleOverlap,
+            child: _buildFloatingNavItem(
+              iconPath: 'assets/images/icon people.svg',
+              isSelected: _isBuyer,
+              onTap: () => setState(() => _isBuyer = true),
+            ),
+          ),
+
+          // ПРАВЫЙ КРУГ
+          Positioned(
+            left: width * 0.75 - circleSize / 2,
+            bottom: barHeight - circleOverlap,
+            child: _buildFloatingNavItem(
+              iconPath: 'assets/images/icon coin.svg',
+              isSelected: !_isBuyer,
+              onTap: () => setState(() => _isBuyer = false),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _navItem(String icon, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 70,
+        height: 70,
+        decoration: BoxDecoration(
+          color: AppColors.bottomNavBar,
+          shape: BoxShape.circle,
+          border: null,
+          boxShadow: selected
+              ? [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.3),
+                    blurRadius: 15,
+                    offset: const Offset(0, 5),
+                  ),
+                ]
+              : null,
+        ),
+        child: Center(
+          child: SvgPicture.asset(
+            icon,
+            width: 34,
+            height: 34,
+            colorFilter: const ColorFilter.mode(
+              AppColors.textWhite,
+              BlendMode.srcIn,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _handleRegister() async {}
 }
 
-class _AddressMapScreen extends StatefulWidget {
-  final Function(String) onAddressSelected;
+class BottomNavClipper extends CustomClipper<Path> {
+  final bool isLeft;
 
-  const _AddressMapScreen({required this.onAddressSelected});
+  BottomNavClipper({required this.isLeft});
+
+  static const double barHeight = 113;
+  static const double circleSize = 85;
+  static const double circleOverlap = 36;
 
   @override
-  State<_AddressMapScreen> createState() => _AddressMapScreenState();
+  Path getClip(Size size) {
+    final path = Path();
+
+    final double horizontalOffset = -6.0; // сдвиг выемки влево
+
+    final double centerX =
+        size.width * (isLeft ? 0.25 : 0.75) + horizontalOffset;
+
+    final double radius = circleSize / 2.2;
+
+    // Верх выемки (она ВЫШЕ начала прямоугольника)
+    final double notchTop = 18.0;
+
+    // Насколько глубоко выемка заходит в круг
+    final double notchDepth = 23.0;
+
+    path.moveTo(0, 0);
+
+    // До начала выемки
+    path.lineTo(centerX - radius - 16, 0);
+
+    // Левая часть выемки (вверх)
+    path.cubicTo(
+      centerX - radius + 2,
+      0,
+      centerX - radius,
+      notchTop + notchDepth,
+      centerX,
+      notchTop + notchDepth,
+    );
+
+    // Правая часть выемки
+    path.cubicTo(
+      centerX + radius,
+      notchTop + notchDepth,
+      centerX + radius - 2,
+      0,
+      centerX + radius + 16,
+      0,
+    );
+
+    // Остальная часть прямоугольника
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, barHeight);
+    path.lineTo(0, barHeight);
+    path.close();
+
+    return path;
+  }
+
+  @override
+  bool shouldReclip(BottomNavClipper oldClipper) => oldClipper.isLeft != isLeft;
 }
 
-class _AddressMapScreenState extends State<_AddressMapScreen> {
-  String _selectedAddress = 'Пермь\nулица Революции, 13';
+class BottomNavPainter extends CustomPainter {
+  final bool leftActive;
+  final Color backgroundColor;
+
+  BottomNavPainter({required this.leftActive, required this.backgroundColor});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = backgroundColor
+      ..style = PaintingStyle.fill;
+
+    final path = Path();
+
+    final double centerX = size.width * (leftActive ? 0.25 : 0.75);
+
+    const double r = 35;
+    const double depth = 22;
+
+    path.moveTo(0, 0);
+    path.lineTo(centerX - r, 0);
+
+    path.quadraticBezierTo(centerX, depth * 2, centerX + r, 0);
+
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant BottomNavPainter oldDelegate) {
+    return oldDelegate.leftActive != leftActive;
+  }
+}
+
+// Экран выбора адреса на карте
+class AddressMapScreen extends StatefulWidget {
+  final Function(String) onAddressSelected;
+
+  const AddressMapScreen({super.key, required this.onAddressSelected});
+
+  @override
+  State<AddressMapScreen> createState() => _AddressMapScreenState();
+}
+
+class _AddressMapScreenState extends State<AddressMapScreen> {
+  String selectedAddress = 'Пермь\nулица Революции, 13';
 
   @override
   Widget build(BuildContext context) {
@@ -611,12 +610,12 @@ class _AddressMapScreenState extends State<_AddressMapScreen> {
                   children: [
                     Text('Адрес вашего ресторна', style: AppTextStyles.h3),
                     const SizedBox(height: AppSpacing.md),
-                    Text(_selectedAddress, style: AppTextStyles.bodyLarge),
+                    Text(selectedAddress, style: AppTextStyles.bodyLarge),
                     const SizedBox(height: AppSpacing.lg),
                     CustomButton(
                       text: 'Готово',
                       onPressed: () {
-                        widget.onAddressSelected(_selectedAddress);
+                        widget.onAddressSelected(selectedAddress);
                         Navigator.of(context).pop();
                       },
                     ),

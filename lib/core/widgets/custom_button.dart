@@ -12,6 +12,8 @@ class CustomButton extends StatelessWidget {
   final double? width;
   final double? height;
   final IconData? icon;
+  final double? fontSize;
+  final FontWeight? fontWeight;
 
   const CustomButton({
     super.key,
@@ -22,6 +24,8 @@ class CustomButton extends StatelessWidget {
     this.width,
     this.height,
     this.icon,
+    this.fontSize,
+    this.fontWeight,
   });
 
   @override
@@ -76,27 +80,29 @@ class CustomButton extends StatelessWidget {
       );
     }
 
+    final textStyle = (fontSize != null || fontWeight != null)
+        ? TextStyle(
+            fontSize: fontSize ?? 16,
+            fontWeight: fontWeight ?? FontWeight.w600,
+            color: isOutlined ? AppColors.primary : AppColors.textWhite,
+            fontFamily: 'Montserrat',
+            letterSpacing: 0.5,
+          )
+        : (isOutlined
+              ? AppTextStyles.button.copyWith(color: AppColors.primary)
+              : AppTextStyles.button);
+
     if (icon != null) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Icon(icon, size: AppSpacing.iconSm),
           const SizedBox(width: AppSpacing.sm),
-          Text(
-            text,
-            style: isOutlined
-                ? AppTextStyles.button.copyWith(color: AppColors.primary)
-                : AppTextStyles.button,
-          ),
+          Text(text, style: textStyle),
         ],
       );
     }
 
-    return Text(
-      text,
-      style: isOutlined
-          ? AppTextStyles.button.copyWith(color: AppColors.primary)
-          : AppTextStyles.button,
-    );
+    return Text(text, style: textStyle);
   }
 }

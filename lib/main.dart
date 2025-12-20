@@ -5,6 +5,8 @@ import 'features/splash/splash_screen.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'features/home/buyer_home_screen.dart';
+import 'features/home/seller_home_screen.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -104,6 +106,8 @@ class FootFoodApp extends StatelessWidget {
         '/auth': (context) => const AuthScreen(),
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
+        '/buyer_home': (context) => const BuyerHomeScreen(),
+        '/seller_home': (context) => const SellerHomeScreen(),
       },
     );
   }
