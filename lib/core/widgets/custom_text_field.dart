@@ -1,4 +1,6 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_spacing.dart';
 
@@ -17,6 +19,8 @@ class CustomTextField extends StatelessWidget {
   final bool enabled;
   final bool readOnly;
   final VoidCallback? onTap;
+  final FocusNode? focusNode;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
@@ -33,74 +37,91 @@ class CustomTextField extends StatelessWidget {
     this.enabled = true,
     this.readOnly = false,
     this.onTap,
+    this.focusNode,
+    this.inputFormatters,
   });
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
-      controller: controller,
-      obscureText: obscureText,
-      keyboardType: keyboardType,
-      validator: validator,
-      onChanged: onChanged,
-      onTap: onTap,
-      readOnly: readOnly,
-      maxLines: maxLines,
-      enabled: enabled,
-      style: const TextStyle(
-        fontSize: 22,
-        fontWeight: FontWeight.w400, // Montserrat Regular
-        color: Color(0xFF1A1C1B),
-        fontFamily: 'Montserrat',
-      ),
-      decoration: InputDecoration(
-        hintText: hintText,
-        labelText: labelText,
-        hintStyle: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-          color: Color(0xFF1A1C1B),
-          fontFamily: 'Montserrat',
-        ),
-        labelStyle: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-          color: Color(0xFF1A1C1B),
-          fontFamily: 'Montserrat',
-        ),
-        prefixIcon: prefixIcon,
-        suffixIcon: suffixIcon,
-        filled: true,
-        fillColor: AppColors.backgroundWhite,
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: AppSpacing.md,
-          vertical: AppSpacing.md,
-        ),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: const BorderSide(color: AppColors.border, width: 2),
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: const BorderSide(color: AppColors.border, width: 2),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: const BorderSide(color: AppColors.primary, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        focusedErrorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: const BorderSide(color: AppColors.error, width: 2),
-        ),
-        disabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          borderSide: BorderSide(
-            color: AppColors.border.withOpacity(0.5),
-            width: 2,
+    return Container(
+      height: 60,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 4, sigmaY: 4),
+          child: TextFormField(
+            controller: controller,
+            focusNode: focusNode,
+            obscureText: obscureText,
+            obscuringCharacter: '*',
+            keyboardType: keyboardType,
+            validator: validator,
+            onChanged: onChanged,
+            onTap: onTap,
+            readOnly: readOnly,
+            maxLines: maxLines,
+            enabled: enabled,
+            inputFormatters: inputFormatters,
+            style: const TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w400,
+              color: Color(0xFF1A1C1B),
+              fontFamily: 'Montserrat',
+            ),
+            decoration: InputDecoration(
+              hintText: hintText,
+              labelText: labelText,
+              hintStyle: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF1A1C1B),
+                fontFamily: 'Montserrat',
+              ),
+              labelStyle: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                color: Color(0xFF1A1C1B),
+                fontFamily: 'Montserrat',
+              ),
+              prefixIcon: prefixIcon,
+              suffixIcon: suffixIcon,
+              filled: true,
+              fillColor: Colors.white.withOpacity(0.3),
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: AppSpacing.md,
+                vertical: 16,
+              ),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: const BorderSide(color: AppColors.border, width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: const BorderSide(color: AppColors.border, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: const BorderSide(
+                  color: AppColors.primary,
+                  width: 2,
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: const BorderSide(color: AppColors.error, width: 2),
+              ),
+              focusedErrorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: const BorderSide(color: AppColors.error, width: 2),
+              ),
+              disabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+                borderSide: BorderSide(
+                  color: AppColors.border.withOpacity(0.5),
+                  width: 2,
+                ),
+              ),
+            ),
           ),
         ),
       ),

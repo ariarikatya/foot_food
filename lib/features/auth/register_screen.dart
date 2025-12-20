@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
@@ -6,6 +7,102 @@ import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
+
+/// Форматтер для телефонного номера в формате +7 (XXX) XXX-XX-XX
+class PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+
+    // Если пользователь удаляет всё
+    if (text.isEmpty || text == '+' || text == '+7' || text == '+7 ') {
+      return const TextEditingValue(
+        text: '+7 (',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+
+    // Если текст не начинается с +7 (, исправляем
+    if (!text.startsWith('+7 (')) {
+      return const TextEditingValue(
+        text: '+7 (',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+
+    // Извлекаем только цифры после +7 (, игнорируем всё кроме цифр 0-9
+    String digitsOnly = '';
+    for (int i = 4; i < text.length; i++) {
+      final char = text[i];
+      // Берём только цифры от 0 до 9
+      if (char.codeUnitAt(0) >= 48 && char.codeUnitAt(0) <= 57) {
+        digitsOnly += char;
+      }
+    }
+
+    // Ограничиваем до 10 цифр
+    if (digitsOnly.length > 10) {
+      digitsOnly = digitsOnly.substring(0, 10);
+    }
+
+    // Формируем отформатированную строку
+    final buffer = StringBuffer('+7 (');
+
+    // Первые 3 цифры
+    if (digitsOnly.isNotEmpty) {
+      int end = digitsOnly.length > 3 ? 3 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(0, end));
+    }
+
+    buffer.write(') ');
+
+    // Следующие 3 цифры
+    if (digitsOnly.length > 3) {
+      int end = digitsOnly.length > 6 ? 6 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(3, end));
+    }
+
+    buffer.write('-');
+
+    // Следующие 2 цифры
+    if (digitsOnly.length > 6) {
+      int end = digitsOnly.length > 8 ? 8 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(6, end));
+    }
+
+    buffer.write('-');
+
+    // Последние 2 цифры
+    if (digitsOnly.length > 8) {
+      buffer.write(digitsOnly.substring(8));
+    }
+
+    final formattedText = buffer.toString();
+
+    // Позиция курсора после последней введенной цифры
+    int cursorPosition = 4; // По умолчанию после +7 (
+
+    if (digitsOnly.isNotEmpty) {
+      if (digitsOnly.length <= 3) {
+        cursorPosition = 4 + digitsOnly.length;
+      } else if (digitsOnly.length <= 6) {
+        cursorPosition = 9 + (digitsOnly.length - 3);
+      } else if (digitsOnly.length <= 8) {
+        cursorPosition = 13 + (digitsOnly.length - 6);
+      } else {
+        cursorPosition = 16 + (digitsOnly.length - 8);
+      }
+    }
+
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorPosition),
+    );
+  }
+}
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -25,6 +122,13 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
+  // Фокусы для текстовых полей
+  final _phoneFocusNode = FocusNode();
+  final _passwordFocusNode = FocusNode();
+  final _confirmPasswordFocusNode = FocusNode();
+  final _sellerPasswordFocusNode = FocusNode();
+  final _sellerConfirmPasswordFocusNode = FocusNode();
+
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
@@ -37,7 +141,28 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _sellerConfirmPasswordController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+
+    // Слушатели фокуса для телефона
+    _phoneFocusNode.addListener(() {
+      if (_phoneFocusNode.hasFocus && _phoneController.text.isEmpty) {
+        setState(() {
+          _phoneController.text = '+7 (';
+          _phoneController.selection = TextSelection.collapsed(offset: 4);
+        });
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _phoneFocusNode.dispose();
+    _passwordFocusNode.dispose();
+    _confirmPasswordFocusNode.dispose();
+    _sellerPasswordFocusNode.dispose();
+    _sellerConfirmPasswordFocusNode.dispose();
+
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -80,16 +205,15 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            const SizedBox(height: AppSpacing.lg),
                             Text(
                               _isBuyer
                                   ? 'Регистрация для покупателя'
                                   : 'Регистрация для продавца',
                               style: AppTextStyles.h2,
                             ),
-                            const SizedBox(height: AppSpacing.xl),
+                            SizedBox(height: _isBuyer ? 25 : 20),
                             _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
-                            const SizedBox(height: AppSpacing.xl),
+                            SizedBox(height: _isBuyer ? 40 : 20),
                             CustomButton(
                               text: 'Зарегистрироваться',
                               onPressed: _isLoading ? null : _handleRegister,
@@ -121,29 +245,61 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
+      child: _isBuyer
+          ? Column(
+              children: [
+                // Стрелка назад слева
+                Row(
+                  children: [
+                    GestureDetector(
+                      onTap: () => Navigator.of(context).pop(),
+                      child: SvgPicture.asset(
+                        'assets/images/Vector.svg',
+                        width: 24,
+                        height: 24,
+                        colorFilter: const ColorFilter.mode(
+                          AppColors.primary,
+                          BlendMode.srcIn,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 20),
+                // Логотип по центру
+                Center(
+                  child: Image.asset(
+                    'assets/images/logodark.png',
+                    width: 223,
+                    height: 128,
+                    fit: BoxFit.contain,
+                  ),
+                ),
+              ],
+            )
+          : Row(
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.of(context).pop(),
+                  child: SvgPicture.asset(
+                    'assets/images/Vector.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                const Spacer(),
+                Image.asset(
+                  'assets/images/logodark.png',
+                  width: 71,
+                  height: 41,
+                  fit: BoxFit.contain,
+                ),
+              ],
             ),
-          ),
-          const Spacer(),
-          Image.asset(
-            'assets/images/logodark.png',
-            width: _isBuyer ? 223 : 71,
-            height: _isBuyer ? 128 : 41,
-            fit: BoxFit.contain,
-          ),
-        ],
-      ),
     );
   }
 
@@ -152,15 +308,40 @@ class _RegisterScreenState extends State<RegisterScreen> {
       children: [
         CustomTextField(
           controller: _phoneController,
-          hintText: '+7 (   )  -  -',
+          focusNode: _phoneFocusNode,
+          hintText: 'Номер телефона',
           keyboardType: TextInputType.phone,
-          validator: (v) =>
-              v == null || v.isEmpty ? 'Введите номер телефона' : null,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp(r'[\d\+\(\)\s\-]')),
+            PhoneInputFormatter(),
+          ],
+          validator: (v) {
+            if (v == null || v.isEmpty || v == '+7 (') {
+              return 'Введите номер телефона';
+            }
+            if (v.length < 18) {
+              return 'Введите полный номер телефона';
+            }
+            return null;
+          },
         ),
-        const SizedBox(height: AppSpacing.md),
-        _passwordField(_passwordController),
-        const SizedBox(height: AppSpacing.md),
-        _confirmPasswordField(_confirmPasswordController, _passwordController),
+        const SizedBox(height: 30),
+        _passwordField(
+          _passwordController,
+          _passwordFocusNode,
+          _obscurePassword,
+          () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+        const SizedBox(height: 30),
+        _confirmPasswordField(
+          _confirmPasswordController,
+          _confirmPasswordFocusNode,
+          _passwordController,
+          _obscureConfirmPassword,
+          () => setState(
+            () => _obscureConfirmPassword = !_obscureConfirmPassword,
+          ),
+        ),
       ],
     );
   }
@@ -175,66 +356,115 @@ class _RegisterScreenState extends State<RegisterScreen> {
           validator: (v) =>
               v != null && v.contains('@') ? null : 'Неверный email',
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 30),
         CustomTextField(
           controller: _restaurantNameController,
           hintText: 'Название ресторана',
           validator: (v) =>
               v != null && v.length >= 6 ? null : 'Минимум 6 символов',
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 30),
         CustomTextField(
           controller: _addressController,
           hintText: 'Добавить адрес',
           readOnly: true,
+          onTap: () async {
+            await Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (context) => AddressMapScreen(
+                  onAddressSelected: (address) {
+                    setState(() {
+                      _addressController.text = address;
+                    });
+                  },
+                ),
+              ),
+            );
+          },
+          suffixIcon: Container(
+            margin: const EdgeInsets.all(8),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: const Text(
+              'Карта',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 16,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
         ),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 30),
         CustomTextField(
           controller: _logoController,
           hintText: 'Логотип',
           readOnly: true,
+          suffixIcon: const Icon(Icons.attach_file, color: AppColors.primary),
         ),
-        const SizedBox(height: AppSpacing.md),
-        _passwordField(_sellerPasswordController),
-        const SizedBox(height: AppSpacing.md),
+        const SizedBox(height: 30),
+        _passwordField(
+          _sellerPasswordController,
+          _sellerPasswordFocusNode,
+          _obscurePassword,
+          () => setState(() => _obscurePassword = !_obscurePassword),
+        ),
+        const SizedBox(height: 30),
         _confirmPasswordField(
           _sellerConfirmPasswordController,
+          _sellerConfirmPasswordFocusNode,
           _sellerPasswordController,
+          _obscureConfirmPassword,
+          () => setState(
+            () => _obscureConfirmPassword = !_obscureConfirmPassword,
+          ),
         ),
       ],
     );
   }
 
-  Widget _passwordField(TextEditingController controller) {
+  Widget _passwordField(
+    TextEditingController controller,
+    FocusNode focusNode,
+    bool obscure,
+    VoidCallback onToggle,
+  ) {
     return CustomTextField(
       controller: controller,
+      focusNode: focusNode,
       hintText: 'Пароль',
-      obscureText: _obscurePassword,
+      obscureText: obscure,
       suffixIcon: IconButton(
         icon: Icon(
-          _obscurePassword ? Icons.visibility_off : Icons.visibility,
+          obscure ? Icons.visibility_off : Icons.visibility,
           color: AppColors.textSecondary,
         ),
-        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+        onPressed: onToggle,
       ),
     );
   }
 
   Widget _confirmPasswordField(
     TextEditingController controller,
+    FocusNode focusNode,
     TextEditingController original,
+    bool obscure,
+    VoidCallback onToggle,
   ) {
     return CustomTextField(
       controller: controller,
+      focusNode: focusNode,
       hintText: 'Повтор пароля',
-      obscureText: _obscureConfirmPassword,
+      obscureText: obscure,
       suffixIcon: IconButton(
         icon: Icon(
-          _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+          obscure ? Icons.visibility_off : Icons.visibility,
           color: AppColors.textSecondary,
         ),
-        onPressed: () =>
-            setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
+        onPressed: onToggle,
       ),
     );
   }
@@ -299,11 +529,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
     final bottomInset = media.padding.bottom;
 
     const double barHeight = 113;
-    const double circleSize = 85;
-    const double circleOverlap = 36;
 
     return SizedBox(
-      height: barHeight + bottomInset + 50, // место под текст
+      height: barHeight + bottomInset + 50,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
@@ -340,8 +568,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           // ЛЕВЫЙ КРУГ
           Positioned(
-            left: width * 0.25 - circleSize / 2,
-            bottom: barHeight - circleOverlap,
+            left: width * 0.25 - 35,
+            bottom: barHeight - 36,
             child: _buildFloatingNavItem(
               iconPath: 'assets/images/icon people.svg',
               isSelected: _isBuyer,
@@ -351,8 +579,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
           // ПРАВЫЙ КРУГ
           Positioned(
-            left: width * 0.75 - circleSize / 2,
-            bottom: barHeight - circleOverlap,
+            left: width * 0.75 - 35,
+            bottom: barHeight - 36,
             child: _buildFloatingNavItem(
               iconPath: 'assets/images/icon coin.svg',
               isSelected: !_isBuyer,
@@ -360,41 +588,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
             ),
           ),
         ],
-      ),
-    );
-  }
-
-  Widget _navItem(String icon, bool selected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 70,
-        height: 70,
-        decoration: BoxDecoration(
-          color: AppColors.bottomNavBar,
-          shape: BoxShape.circle,
-          border: null,
-          boxShadow: selected
-              ? [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.3),
-                    blurRadius: 15,
-                    offset: const Offset(0, 5),
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: SvgPicture.asset(
-            icon,
-            width: 34,
-            height: 34,
-            colorFilter: const ColorFilter.mode(
-              AppColors.textWhite,
-              BlendMode.srcIn,
-            ),
-          ),
-        ),
       ),
     );
   }
@@ -415,28 +608,27 @@ class BottomNavClipper extends CustomClipper<Path> {
   Path getClip(Size size) {
     final path = Path();
 
-    final double horizontalOffset = -6.0; // сдвиг выемки влево
-
-    final double centerX =
-        size.width * (isLeft ? 0.25 : 0.75) + horizontalOffset;
-
+    final double centerX = size.width * (isLeft ? 0.25 : 0.75);
     final double radius = circleSize / 2.2;
-
-    // Верх выемки (она ВЫШЕ начала прямоугольника)
     final double notchTop = 18.0;
-
-    // Насколько глубоко выемка заходит в круг
     final double notchDepth = 23.0;
 
+    // Начинаем путь
     path.moveTo(0, 0);
 
-    // До начала выемки
+    // Левая часть до выемки - одинаковая ширина для обеих сторон
     path.lineTo(centerX - radius - 16, 0);
+
+    // Левая часть выемки с радиусом скругления
+    path.arcToPoint(
+      Offset(centerX - radius + 4, 5),
+      radius: const Radius.circular(5),
+    );
 
     // Левая часть выемки (вверх)
     path.cubicTo(
-      centerX - radius + 2,
-      0,
+      centerX - radius + 4,
+      5,
       centerX - radius,
       notchTop + notchDepth,
       centerX,
@@ -447,13 +639,19 @@ class BottomNavClipper extends CustomClipper<Path> {
     path.cubicTo(
       centerX + radius,
       notchTop + notchDepth,
-      centerX + radius - 2,
-      0,
-      centerX + radius + 16,
-      0,
+      centerX + radius - 4,
+      5,
+      centerX + radius - 4,
+      5,
     );
 
-    // Остальная часть прямоугольника
+    // Правая часть выемки с радиусом скругления
+    path.arcToPoint(
+      Offset(centerX + radius + 16, 0),
+      radius: const Radius.circular(5),
+    );
+
+    // Правая часть до конца
     path.lineTo(size.width, 0);
     path.lineTo(size.width, barHeight);
     path.lineTo(0, barHeight);
@@ -464,44 +662,6 @@ class BottomNavClipper extends CustomClipper<Path> {
 
   @override
   bool shouldReclip(BottomNavClipper oldClipper) => oldClipper.isLeft != isLeft;
-}
-
-class BottomNavPainter extends CustomPainter {
-  final bool leftActive;
-  final Color backgroundColor;
-
-  BottomNavPainter({required this.leftActive, required this.backgroundColor});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = backgroundColor
-      ..style = PaintingStyle.fill;
-
-    final path = Path();
-
-    final double centerX = size.width * (leftActive ? 0.25 : 0.75);
-
-    const double r = 35;
-    const double depth = 22;
-
-    path.moveTo(0, 0);
-    path.lineTo(centerX - r, 0);
-
-    path.quadraticBezierTo(centerX, depth * 2, centerX + r, 0);
-
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
-
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant BottomNavPainter oldDelegate) {
-    return oldDelegate.leftActive != leftActive;
-  }
 }
 
 // Экран выбора адреса на карте
@@ -608,7 +768,7 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('Адрес вашего ресторна', style: AppTextStyles.h3),
+                    Text('Адрес вашего ресторана', style: AppTextStyles.h3),
                     const SizedBox(height: AppSpacing.md),
                     Text(selectedAddress, style: AppTextStyles.bodyLarge),
                     const SizedBox(height: AppSpacing.lg),
