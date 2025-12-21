@@ -6,6 +6,15 @@
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Foot Food</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+<string>Нужен доступ к фотогалерее для выбора логотипа ресторана</string>
+
+<key>NSCameraUsageDescription</key>
+<string>Нужен доступ к камере для фото логотипа ресторана</string>
+
+<key>NSPhotoLibraryAddUsageDescription</key>
+<string>Нужен доступ для сохранения фотографий</string>
+
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>

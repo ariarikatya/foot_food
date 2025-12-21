@@ -16,6 +16,9 @@ dependencies:
   # SVG поддержка
   flutter_svg: ^2.0.9
 
+  # Выбор изображений из галереи
+  image_picker: ^1.0.7
+
 dev_dependencies:
   flutter_test:
     sdk: flutter

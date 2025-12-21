@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
@@ -8,101 +9,98 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
 
-/// Форматтер для телефонного номера в формате +7 (XXX) XXX-XX-XX
-class PhoneInputFormatter extends TextInputFormatter {
+// --- КЛАССЫ РИСОВАНИЯ (ВЫНЕСЕНЫ ИЗ КЛАССА СОСТОЯНИЯ) ---
+
+class NavShadowPainter extends CustomPainter {
+  final bool isLeft;
+  final Color color;
+  NavShadowPainter({required this.isLeft, required this.color});
+
   @override
-  TextEditingValue formatEditUpdate(
-    TextEditingValue oldValue,
-    TextEditingValue newValue,
-  ) {
-    final text = newValue.text;
+  void paint(Canvas canvas, Size size) {
+    // Используем тот же путь, что и в клиппере
+    final path = BottomNavClipper(isLeft: isLeft).getClip(size);
+    final paint = Paint()
+      ..color = color
+          .withOpacity(0.2) // Мягкая тень
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
 
-    // Если пользователь удаляет всё
-    if (text.isEmpty || text == '+' || text == '+7' || text == '+7 ') {
-      return const TextEditingValue(
-        text: '+7 (',
-        selection: TextSelection.collapsed(offset: 4),
-      );
-    }
-
-    // Если текст не начинается с +7 (, исправляем
-    if (!text.startsWith('+7 (')) {
-      return const TextEditingValue(
-        text: '+7 (',
-        selection: TextSelection.collapsed(offset: 4),
-      );
-    }
-
-    // Извлекаем только цифры после +7 (, игнорируем всё кроме цифр 0-9
-    String digitsOnly = '';
-    for (int i = 4; i < text.length; i++) {
-      final char = text[i];
-      // Берём только цифры от 0 до 9
-      if (char.codeUnitAt(0) >= 48 && char.codeUnitAt(0) <= 57) {
-        digitsOnly += char;
-      }
-    }
-
-    // Ограничиваем до 10 цифр
-    if (digitsOnly.length > 10) {
-      digitsOnly = digitsOnly.substring(0, 10);
-    }
-
-    // Формируем отформатированную строку
-    final buffer = StringBuffer('+7 (');
-
-    // Первые 3 цифры
-    if (digitsOnly.isNotEmpty) {
-      int end = digitsOnly.length > 3 ? 3 : digitsOnly.length;
-      buffer.write(digitsOnly.substring(0, end));
-    }
-
-    buffer.write(') ');
-
-    // Следующие 3 цифры
-    if (digitsOnly.length > 3) {
-      int end = digitsOnly.length > 6 ? 6 : digitsOnly.length;
-      buffer.write(digitsOnly.substring(3, end));
-    }
-
-    buffer.write('-');
-
-    // Следующие 2 цифры
-    if (digitsOnly.length > 6) {
-      int end = digitsOnly.length > 8 ? 8 : digitsOnly.length;
-      buffer.write(digitsOnly.substring(6, end));
-    }
-
-    buffer.write('-');
-
-    // Последние 2 цифры
-    if (digitsOnly.length > 8) {
-      buffer.write(digitsOnly.substring(8));
-    }
-
-    final formattedText = buffer.toString();
-
-    // Позиция курсора после последней введенной цифры
-    int cursorPosition = 4; // По умолчанию после +7 (
-
-    if (digitsOnly.isNotEmpty) {
-      if (digitsOnly.length <= 3) {
-        cursorPosition = 4 + digitsOnly.length;
-      } else if (digitsOnly.length <= 6) {
-        cursorPosition = 9 + (digitsOnly.length - 3);
-      } else if (digitsOnly.length <= 8) {
-        cursorPosition = 13 + (digitsOnly.length - 6);
-      } else {
-        cursorPosition = 16 + (digitsOnly.length - 8);
-      }
-    }
-
-    return TextEditingValue(
-      text: formattedText,
-      selection: TextSelection.collapsed(offset: cursorPosition),
-    );
+    // Сдвигаем тень чуть выше, чтобы она была видна над меню
+    canvas.drawPath(path.shift(const Offset(0, -4)), paint);
   }
+
+  @override
+  bool shouldRepaint(NavShadowPainter old) => old.isLeft != isLeft;
 }
+
+class BottomNavClipper extends CustomClipper<Path> {
+  final bool isLeft;
+  BottomNavClipper({required this.isLeft});
+
+  @override
+  Path getClip(Size size) {
+    final path = Path();
+    final double centerX = size.width * (isLeft ? 0.25 : 0.75);
+
+    // Геометрия как на первом фото (мягкий верх, узкий низ)
+    const double notchWidth = 39.0;
+    const double smoothOffset = 15.0;
+    const double notchDepth = 43.0;
+
+    path.moveTo(0, 0);
+    path.lineTo(centerX - notchWidth - smoothOffset, 0);
+
+    // Плавный вход
+    path.cubicTo(
+      centerX - notchWidth - 10,
+      0,
+      centerX - notchWidth,
+      2,
+      centerX - notchWidth,
+      15,
+    );
+
+    // Узкое дно (сведено к 22 пикселям от центра)
+    path.cubicTo(
+      centerX - notchWidth,
+      35,
+      centerX - 22,
+      notchDepth,
+      centerX,
+      notchDepth,
+    );
+
+    // Зеркально право
+    path.cubicTo(
+      centerX + 22,
+      notchDepth,
+      centerX + notchWidth,
+      35,
+      centerX + notchWidth,
+      15,
+    );
+
+    path.cubicTo(
+      centerX + notchWidth,
+      2,
+      centerX + notchWidth + 10,
+      0,
+      centerX + notchWidth + smoothOffset,
+      0,
+    );
+
+    path.lineTo(size.width, 0);
+    path.lineTo(size.width, size.height);
+    path.lineTo(0, size.height);
+    path.close();
+    return path;
+  }
+
+  @override
+  bool shouldReclip(BottomNavClipper old) => old.isLeft != isLeft;
+}
+
+// --- ОСНОВНОЙ КЛАСС ЭКРАНА ---
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -118,11 +116,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   bool _isBuyer = true;
   bool _isLoading = false;
   bool _agreedToTerms = false;
-
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Фокусы для текстовых полей
   final _phoneFocusNode = FocusNode();
   final _passwordFocusNode = FocusNode();
   final _confirmPasswordFocusNode = FocusNode();
@@ -132,7 +128,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-
   final _emailController = TextEditingController();
   final _restaurantNameController = TextEditingController();
   final _addressController = TextEditingController();
@@ -140,16 +135,16 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _sellerPasswordController = TextEditingController();
   final _sellerConfirmPasswordController = TextEditingController();
 
+  final ImagePicker _imagePicker = ImagePicker();
+
   @override
   void initState() {
     super.initState();
-
-    // Слушатели фокуса для телефона
     _phoneFocusNode.addListener(() {
       if (_phoneFocusNode.hasFocus && _phoneController.text.isEmpty) {
         setState(() {
           _phoneController.text = '+7 (';
-          _phoneController.selection = TextSelection.collapsed(offset: 4);
+          _phoneController.selection = const TextSelection.collapsed(offset: 4);
         });
       }
     });
@@ -162,7 +157,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _confirmPasswordFocusNode.dispose();
     _sellerPasswordFocusNode.dispose();
     _sellerConfirmPasswordFocusNode.dispose();
-
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
@@ -177,6 +171,33 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   String get _backgroundImage =>
       _isBuyer ? 'assets/images/regcli.png' : 'assets/images/regsell.png';
+
+  Future<void> _handleRegister() async {
+    // Твоя логика регистрации
+  }
+
+  Future<void> _pickImage() async {
+    try {
+      final XFile? image = await _imagePicker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85,
+      );
+      if (image != null) {
+        setState(() {
+          _logoController.text = image.path.split('/').last;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка выбора изображения: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -209,7 +230,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               _isBuyer
                                   ? 'Регистрация для покупателя'
                                   : 'Регистрация для продавца',
-                              style: AppTextStyles.h2,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.w300,
+                                color: AppColors.textPrimary,
+                                fontFamily: 'Montserrat',
+                              ),
                             ),
                             SizedBox(height: _isBuyer ? 25 : 20),
                             _isBuyer ? _buildBuyerForm() : _buildSellerForm(),
@@ -242,13 +268,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 
+  // --- ТВОИ МЕТОДЫ ИНТЕРФЕЙСА (ВОССТАНОВЛЕНО) ---
+
   Widget _buildAppBar() {
     return Padding(
-      padding: const EdgeInsets.all(AppSpacing.md),
+      padding: EdgeInsets.only(
+        left: AppSpacing.md,
+        right: AppSpacing.md,
+        top: AppSpacing.md,
+        bottom: _isBuyer ? AppSpacing.md : 0,
+      ),
       child: _isBuyer
           ? Column(
               children: [
-                // Стрелка назад слева
                 Row(
                   children: [
                     GestureDetector(
@@ -266,7 +298,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                   ],
                 ),
                 const SizedBox(height: 20),
-                // Логотип по центру
                 Center(
                   child: Image.asset(
                     'assets/images/logodark.png',
@@ -315,15 +346,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             FilteringTextInputFormatter.allow(RegExp(r'[\d\+\(\)\s\-]')),
             PhoneInputFormatter(),
           ],
-          validator: (v) {
-            if (v == null || v.isEmpty || v == '+7 (') {
-              return 'Введите номер телефона';
-            }
-            if (v.length < 18) {
-              return 'Введите полный номер телефона';
-            }
-            return null;
-          },
+          validator: (v) =>
+              (v == null || v.length < 18) ? 'Введите полный номер' : null,
         ),
         const SizedBox(height: 30),
         _passwordField(
@@ -372,11 +396,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
             await Navigator.of(context).push(
               MaterialPageRoute(
                 builder: (context) => AddressMapScreen(
-                  onAddressSelected: (address) {
-                    setState(() {
-                      _addressController.text = address;
-                    });
-                  },
+                  onAddressSelected: (address) =>
+                      setState(() => _addressController.text = address),
                 ),
               ),
             );
@@ -399,11 +420,41 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 30),
-        CustomTextField(
-          controller: _logoController,
-          hintText: 'Логотип',
-          readOnly: true,
-          suffixIcon: const Icon(Icons.attach_file, color: AppColors.primary),
+        GestureDetector(
+          onTap: _pickImage,
+          child: Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              border: Border.all(color: AppColors.border, width: 2),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.attach_file,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    _logoController.text.isEmpty
+                        ? 'Логотип'
+                        : _logoController.text,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF1A1C1B),
+                      fontFamily: 'Montserrat',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
         const SizedBox(height: 30),
         _passwordField(
@@ -431,58 +482,50 @@ class _RegisterScreenState extends State<RegisterScreen> {
     FocusNode focusNode,
     bool obscure,
     VoidCallback onToggle,
-  ) {
-    return CustomTextField(
-      controller: controller,
-      focusNode: focusNode,
-      hintText: 'Пароль',
-      obscureText: obscure,
-      suffixIcon: IconButton(
-        icon: Icon(
-          obscure ? Icons.visibility_off : Icons.visibility,
-          color: AppColors.textSecondary,
-        ),
-        onPressed: onToggle,
+  ) => CustomTextField(
+    controller: controller,
+    focusNode: focusNode,
+    hintText: 'Пароль',
+    obscureText: obscure,
+    suffixIcon: IconButton(
+      icon: Icon(
+        obscure ? Icons.visibility_off : Icons.visibility,
+        color: AppColors.textSecondary,
       ),
-    );
-  }
-
+      onPressed: onToggle,
+    ),
+  );
   Widget _confirmPasswordField(
     TextEditingController controller,
     FocusNode focusNode,
     TextEditingController original,
     bool obscure,
     VoidCallback onToggle,
-  ) {
-    return CustomTextField(
-      controller: controller,
-      focusNode: focusNode,
-      hintText: 'Повтор пароля',
-      obscureText: obscure,
-      suffixIcon: IconButton(
-        icon: Icon(
-          obscure ? Icons.visibility_off : Icons.visibility,
-          color: AppColors.textSecondary,
-        ),
-        onPressed: onToggle,
+  ) => CustomTextField(
+    controller: controller,
+    focusNode: focusNode,
+    hintText: 'Повтор пароля',
+    obscureText: obscure,
+    suffixIcon: IconButton(
+      icon: Icon(
+        obscure ? Icons.visibility_off : Icons.visibility,
+        color: AppColors.textSecondary,
       ),
-    );
-  }
-
-  Widget _buildTermsCheckbox() {
-    return Row(
-      children: [
-        Checkbox(
-          value: _agreedToTerms,
-          onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
-          activeColor: AppColors.primary,
-        ),
-        Expanded(
-          child: Text('Согласен с условиями', style: AppTextStyles.bodySmall),
-        ),
-      ],
-    );
-  }
+      onPressed: onToggle,
+    ),
+  );
+  Widget _buildTermsCheckbox() => Row(
+    children: [
+      Checkbox(
+        value: _agreedToTerms,
+        onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
+        activeColor: AppColors.primary,
+      ),
+      Expanded(
+        child: Text('Согласен с условиями', style: AppTextStyles.bodySmall),
+      ),
+    ],
+  );
 
   Widget _buildFloatingNavItem({
     required String iconPath,
@@ -524,18 +567,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
   }
 
   Widget _buildBottomNavigationBar() {
-    final media = MediaQuery.of(context);
-    final width = media.size.width;
-    final bottomInset = media.padding.bottom;
-
+    final width = MediaQuery.of(context).size.width;
+    final bottomInset = MediaQuery.of(context).padding.bottom;
     const double barHeight = 113;
 
     return SizedBox(
-      height: barHeight + bottomInset + 50,
+      height: barHeight + bottomInset + 40,
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ФОН С ВЫЕМКОЙ
+          // ТЕНЬ
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 0,
+            child: CustomPaint(
+              size: Size(width, barHeight),
+              painter: NavShadowPainter(isLeft: _isBuyer, color: Colors.black),
+            ),
+          ),
+          // МЕНЮ
           Positioned(
             left: 0,
             right: 0,
@@ -546,41 +597,36 @@ class _RegisterScreenState extends State<RegisterScreen> {
                 height: barHeight,
                 color: AppColors.bottomNavBar,
                 padding: EdgeInsets.only(bottom: bottomInset + 12),
-                child: Align(
-                  alignment: Alignment.bottomCenter,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Text(
-                      'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности и условиями пользовательского соглашения',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 8,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF7FA29A),
-                        height: 1.3,
-                      ),
+                alignment: Alignment.bottomCenter,
+                child: const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 24),
+                  child: Text(
+                    'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности и условиями пользовательского соглашения',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 8,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF7FA29A),
+                      height: 1.3,
                     ),
                   ),
                 ),
               ),
             ),
           ),
-
-          // ЛЕВЫЙ КРУГ
+          // КРУГИ
           Positioned(
             left: width * 0.25 - 35,
-            bottom: barHeight - 36,
+            bottom: barHeight - 35,
             child: _buildFloatingNavItem(
               iconPath: 'assets/images/icon people.svg',
               isSelected: _isBuyer,
               onTap: () => setState(() => _isBuyer = true),
             ),
           ),
-
-          // ПРАВЫЙ КРУГ
           Positioned(
             left: width * 0.75 - 35,
-            bottom: barHeight - 36,
+            bottom: barHeight - 35,
             child: _buildFloatingNavItem(
               iconPath: 'assets/images/icon coin.svg',
               isSelected: !_isBuyer,
@@ -591,92 +637,19 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-
-  Future<void> _handleRegister() async {}
 }
 
-class BottomNavClipper extends CustomClipper<Path> {
-  final bool isLeft;
+// --- ВОССТАНОВЛЕННЫЙ ЭКРАН КАРТЫ ---
 
-  BottomNavClipper({required this.isLeft});
-
-  static const double barHeight = 113;
-  static const double circleSize = 85;
-  static const double circleOverlap = 36;
-
-  @override
-  Path getClip(Size size) {
-    final path = Path();
-
-    final double centerX = size.width * (isLeft ? 0.25 : 0.75);
-    final double radius = circleSize / 2.2;
-    final double notchTop = 18.0;
-    final double notchDepth = 23.0;
-
-    // Начинаем путь
-    path.moveTo(0, 0);
-
-    // Левая часть до выемки - одинаковая ширина для обеих сторон
-    path.lineTo(centerX - radius - 16, 0);
-
-    // Левая часть выемки с радиусом скругления
-    path.arcToPoint(
-      Offset(centerX - radius + 4, 5),
-      radius: const Radius.circular(5),
-    );
-
-    // Левая часть выемки (вверх)
-    path.cubicTo(
-      centerX - radius + 4,
-      5,
-      centerX - radius,
-      notchTop + notchDepth,
-      centerX,
-      notchTop + notchDepth,
-    );
-
-    // Правая часть выемки
-    path.cubicTo(
-      centerX + radius,
-      notchTop + notchDepth,
-      centerX + radius - 4,
-      5,
-      centerX + radius - 4,
-      5,
-    );
-
-    // Правая часть выемки с радиусом скругления
-    path.arcToPoint(
-      Offset(centerX + radius + 16, 0),
-      radius: const Radius.circular(5),
-    );
-
-    // Правая часть до конца
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, barHeight);
-    path.lineTo(0, barHeight);
-    path.close();
-
-    return path;
-  }
-
-  @override
-  bool shouldReclip(BottomNavClipper oldClipper) => oldClipper.isLeft != isLeft;
-}
-
-// Экран выбора адреса на карте
 class AddressMapScreen extends StatefulWidget {
   final Function(String) onAddressSelected;
-
   const AddressMapScreen({super.key, required this.onAddressSelected});
-
   @override
   State<AddressMapScreen> createState() => _AddressMapScreenState();
 }
 
 class _AddressMapScreenState extends State<AddressMapScreen> {
   String selectedAddress = 'Пермь\nулица Революции, 13';
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -786,6 +759,68 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
           ),
         ],
       ),
+    );
+  }
+}
+
+class PhoneInputFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    if (text.isEmpty || text == '+' || text == '+7' || text == '+7 ') {
+      return const TextEditingValue(
+        text: '+7 (',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+    if (!text.startsWith('+7 (')) {
+      return const TextEditingValue(
+        text: '+7 (',
+        selection: TextSelection.collapsed(offset: 4),
+      );
+    }
+    String digitsOnly = '';
+    for (int i = 4; i < text.length; i++) {
+      final char = text[i];
+      if (char.codeUnitAt(0) >= 48 && char.codeUnitAt(0) <= 57)
+        digitsOnly += char;
+    }
+    if (digitsOnly.length > 10) digitsOnly = digitsOnly.substring(0, 10);
+    final buffer = StringBuffer('+7 (');
+    if (digitsOnly.isNotEmpty) {
+      int end = digitsOnly.length > 3 ? 3 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(0, end));
+    }
+    buffer.write(') ');
+    if (digitsOnly.length > 3) {
+      int end = digitsOnly.length > 6 ? 6 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(3, end));
+    }
+    buffer.write('-');
+    if (digitsOnly.length > 6) {
+      int end = digitsOnly.length > 8 ? 8 : digitsOnly.length;
+      buffer.write(digitsOnly.substring(6, end));
+    }
+    buffer.write('-');
+    if (digitsOnly.length > 8) buffer.write(digitsOnly.substring(8));
+    final formattedText = buffer.toString();
+    int cursorPosition = 4;
+    if (digitsOnly.isNotEmpty) {
+      if (digitsOnly.length <= 3)
+        cursorPosition = 4 + digitsOnly.length;
+      else if (digitsOnly.length <= 6)
+        cursorPosition = 9 + (digitsOnly.length - 3);
+      else if (digitsOnly.length <= 8)
+        cursorPosition = 13 + (digitsOnly.length - 6);
+      else
+        cursorPosition = 16 + (digitsOnly.length - 8);
+    }
+    return TextEditingValue(
+      text: formattedText,
+      selection: TextSelection.collapsed(offset: cursorPosition),
     );
   }
 }
