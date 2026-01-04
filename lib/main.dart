@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_colors.dart';
 import 'features/splash/splash_screen.dart';
+import 'features/onboarding/onboarding_screen.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/auth/login_screen.dart';
@@ -103,6 +105,7 @@ class FootFoodApp extends StatelessWidget {
       initialRoute: '/',
       routes: {
         '/': (context) => const SplashScreen(),
+        '/onboarding': (context) => const OnboardingScreen(),
         '/auth': (context) => const AuthScreen(),
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),

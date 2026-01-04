@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_text_styles.dart';
-import '../../core/widgets/custom_button.dart';
+import '../../data/models/order_model.dart';
+import '../../data/models/order_history_model.dart';
+import '../../data/services/mock_api_service.dart';
 
-/// Главный экран продавца (экран 6 из дизайна)
+/// Главный экран продавца
 class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
 
@@ -13,378 +15,319 @@ class SellerHomeScreen extends StatefulWidget {
 }
 
 class _SellerHomeScreenState extends State<SellerHomeScreen> {
-  // Тестовые данные для футбоксов
-  final List<Map<String, dynamic>> _foodboxes = [
-    {
-      'title': 'Футбокс 1',
-      'description': 'Суп, второе, салат',
-      'price': '500 ₽',
-      'cookingTime': '8:08',
-      'endTime': '14:00',
-      'reservations': 3,
-      'maxReservations': 10,
-      'image': 'assets/images/placeholder_food.png',
-    },
-    {
-      'title': 'Футбокс 2',
-      'description': 'Пицца, напиток',
-      'price': '410 ₽',
-      'cookingTime': '10:00',
-      'endTime': '16:00',
-      'reservations': 7,
-      'maxReservations': 10,
-      'image': 'assets/images/placeholder_food.png',
-    },
-  ];
+  final _apiService = MockApiService();
+  List<OrderModel> _activeOrders = [];
+  List<OrderHistoryModel> _historyOrders = [];
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final orders = await _apiService.getSellerOrders(1);
+      final history = await _apiService.getUserOrderHistory(1);
+
+      setState(() {
+        _activeOrders = orders;
+        _historyOrders = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return DateFormat('dd.MM.yyyy').format(date);
+  }
+
+  // Получаем информацию о ресторане по idSeller
+  Map<String, String> _getSellerInfo(int sellerId) {
+    // Здесь должен быть реальный запрос к API
+    return {
+      'nameRestaurant': 'Тестовый ресторан',
+      'address': 'Пермь, ул. Революции, 13',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/sellerHome.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: Column(
           children: [
             _buildHeader(),
-            Expanded(child: _buildFoodboxList()),
+            Expanded(
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildContent(),
+            ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
-      floatingActionButton: _buildAddButton(),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
     );
   }
 
   Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      child: Row(
+      width: double.infinity,
+      height: 150,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(10),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x59000000), // 35% opacity
+            offset: const Offset(0, 6),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: Column(
         children: [
-          // Логотип ресторана
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(left: 26, right: 26, bottom: 20),
             child: Container(
-              width: 60,
-              height: 60,
-              color: Colors.grey[300],
-              child: const Icon(Icons.restaurant, size: 30),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          // Название ресторана
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Лента footbox',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1C1B),
-                    fontFamily: 'Montserrat',
+              height: 50,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(50),
+              ),
+              child: Row(
+                children: [
+                  const SizedBox(width: 24),
+                  const Expanded(
+                    child: TextField(
+                      style: TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Montserrat',
+                      ),
+                      decoration: InputDecoration(
+                        hintText: 'Поиск',
+                        hintStyle: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Montserrat',
+                        ),
+                        border: InputBorder.none,
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Пермь, ул. Революции, 13',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Colors.grey[600],
-                    fontFamily: 'Montserrat',
+                  Padding(
+                    padding: const EdgeInsets.only(right: 15),
+                    child: Image.asset(
+                      'assets/images/search.svg',
+                      width: 24,
+                      height: 24,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          // Меню
-          Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: AppColors.backgroundWhite,
-              borderRadius: BorderRadius.circular(25),
-              border: Border.all(color: AppColors.border, width: 2),
-            ),
-            child: const Icon(Icons.menu, color: AppColors.primary),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildFoodboxList() {
-    if (_foodboxes.isEmpty) {
-      return Center(
+  Widget _buildContent() {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 31),
         child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Icon(Icons.fastfood_outlined, size: 80, color: Colors.grey[400]),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Нет активных футбоксов',
-              style: AppTextStyles.h3.copyWith(color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Создайте первый футбокс',
-              style: AppTextStyles.bodyMedium.copyWith(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            const SizedBox(height: 20),
+            _buildSectionTitle('Активные'),
+            const SizedBox(height: 20),
+            _buildActiveOrders(),
+            const SizedBox(height: 23),
+            _buildSectionTitle('История'),
+            const SizedBox(height: 10),
+            _buildHistoryOrders(),
+            const SizedBox(height: 20),
           ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Row(
+      children: [
+        Text(
+          title,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+            fontFamily: 'Montserrat',
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(child: Container(height: 1, color: const Color(0xFF00221D))),
+      ],
+    );
+  }
+
+  Widget _buildActiveOrders() {
+    if (_activeOrders.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет активных заказов',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
+          ),
         ),
       );
     }
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      itemCount: _foodboxes.length,
-      itemBuilder: (context, index) {
-        final foodbox = _foodboxes[index];
-        return _buildFoodboxCard(foodbox);
-      },
-    );
-  }
-
-  Widget _buildFoodboxCard(Map<String, dynamic> foodbox) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Изображение футбокса
-          ClipRRect(
-            borderRadius: const BorderRadius.only(
-              topLeft: Radius.circular(18),
-              topRight: Radius.circular(18),
-            ),
-            child: Container(
-              width: double.infinity,
-              height: 200,
-              color: Colors.grey[300],
-              child: Image.asset(
-                foodbox['image'],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.fastfood, size: 80);
-                },
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.md),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Название и цена
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      foodbox['title'],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1A1C1B),
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                    Text(
-                      foodbox['price'],
-                      style: const TextStyle(
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.primary,
-                        fontFamily: 'Montserrat',
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                // Описание
-                Text(
-                  foodbox['description'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF7A9999),
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // Время приготовления и окончания
-                Row(
-                  children: [
-                    _buildInfoChip(
-                      'В продаже с ${foodbox['cookingTime']} до ${foodbox['endTime']}',
-                      Icons.access_time,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.sm),
-                // Бронирования
-                Row(
-                  children: [
-                    _buildInfoChip(
-                      'Бронирований: ${foodbox['reservations']}/${foodbox['maxReservations']}',
-                      Icons.people,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: AppSpacing.md),
-                // Кнопки действий
-                Row(
-                  children: [
-                    Expanded(
-                      child: CustomButton(
-                        text: 'Редактировать',
-                        height: 44,
-                        onPressed: () {
-                          // Редактирование
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: AppSpacing.sm),
-                    Expanded(
-                      child: CustomButton(
-                        text: 'Удалить',
-                        height: 44,
-                        isOutlined: true,
-                        onPressed: () {
-                          // Удаление
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInfoChip(String text, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.md,
-        vertical: AppSpacing.sm,
-      ),
-      decoration: BoxDecoration(
-        color: AppColors.accent.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(icon, size: 18, color: AppColors.primary),
-          const SizedBox(width: AppSpacing.xs),
-          Text(
-            text,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w500,
-              color: AppColors.primary,
-              fontFamily: 'Montserrat',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAddButton() {
-    return Container(
-      width: 70,
-      height: 70,
-      margin: const EdgeInsets.only(bottom: 20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        shape: BoxShape.circle,
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.shadowDark,
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
-      ),
-      child: IconButton(
-        icon: const Icon(Icons.add, size: 35, color: AppColors.textWhite),
-        onPressed: () {
-          // Добавить футбокс
-          _showAddFoodboxDialog();
+    return SizedBox(
+      height: 180,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _activeOrders.length,
+        itemBuilder: (context, index) {
+          final order = _activeOrders[index];
+          final sellerInfo = _getSellerInfo(order.idSeller);
+          return _buildOrderCard(
+            nameRestaurant: sellerInfo['nameRestaurant']!,
+            address: sellerInfo['address']!,
+            date: _formatDate(order.cookingTime),
+            price: order.price,
+          );
         },
       ),
     );
   }
 
-  void _showAddFoodboxDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Создать футбокс'),
-        content: const Text('Здесь будет форма создания нового футбокса'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Отмена'),
+  Widget _buildHistoryOrders() {
+    if (_historyOrders.isEmpty) {
+      return const Center(
+        child: Text(
+          'История пуста',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
           ),
-          TextButton(
-            onPressed: () {
-              Navigator.of(context).pop();
-              // Добавить новый футбокс
-            },
-            child: const Text('Создать'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: AppColors.bottomNavBar,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, true),
-          _buildNavItem(Icons.receipt_long, false),
-          const SizedBox(width: 70), // Пространство для FAB
-          _buildNavItem(Icons.analytics, false),
-          _buildNavItem(Icons.settings, false),
-        ],
+      );
+    }
+
+    return SizedBox(
+      height: 180,
+      child: ListView.builder(
+        scrollDirection: Axis.horizontal,
+        itemCount: _historyOrders.length,
+        itemBuilder: (context, index) {
+          final order = _historyOrders[index];
+          final sellerInfo = _getSellerInfo(order.idSeller);
+          return _buildOrderCard(
+            nameRestaurant: sellerInfo['nameRestaurant']!,
+            address: sellerInfo['address']!,
+            date: _formatDate(order.bayTime),
+            price: order.price,
+          );
+        },
       ),
     );
   }
 
-  Widget _buildNavItem(IconData icon, bool isSelected) {
+  Widget _buildOrderCard({
+    required String nameRestaurant,
+    required String address,
+    required String date,
+    required double price,
+  }) {
     return Container(
-      width: 60,
-      height: 60,
+      width: 150,
+      margin: const EdgeInsets.only(right: 15),
+      padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: isSelected ? AppColors.backgroundWhite : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
+        color: const Color(0xFFFCF8F8),
+        borderRadius: BorderRadius.circular(10),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x59000000), // 35% opacity
+            offset: const Offset(4, 8),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
       ),
-      child: Icon(
-        icon,
-        color: isSelected ? AppColors.primary : AppColors.textWhite,
-        size: 28,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            nameRestaurant,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Jura',
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 10),
+          Text(
+            address,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+          ),
+          const SizedBox(height: 5),
+          Text(
+            date,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Align(
+            alignment: Alignment.centerRight,
+            child: Text(
+              '${price.toStringAsFixed(0)} ₽',
+              style: const TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w300,
+                fontFamily: 'Montserrat',
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

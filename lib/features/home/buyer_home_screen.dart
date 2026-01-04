@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/constants/app_text_styles.dart';
+import '../../data/models/order_model.dart';
+import '../../data/services/mock_api_service.dart';
 
-/// Главный экран покупателя (экран 9 из дизайна)
+/// Главный экран покупателя
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
 
@@ -12,309 +13,373 @@ class BuyerHomeScreen extends StatefulWidget {
 }
 
 class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
-  int _selectedIndex = 0;
+  final _apiService = MockApiService();
+  final PageController _pageController = PageController();
+  List<OrderModel> _orders = [];
+  bool _isLoading = true;
+  int _currentImageIndex = 0;
 
-  // Тестовые данные для заказов
-  final List<Map<String, dynamic>> _activeOrders = [
-    {
-      'name': 'Никала\nПиросмани',
-      'location': 'Пермь,\nМонастырская...',
-      'date': '21.08.2025',
-      'price': '500 ₽',
-      'image': 'assets/images/placeholder_food.png',
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
 
-  final List<Map<String, dynamic>> _historyOrders = [
-    {
-      'name': 'Casa Mia',
-      'location': 'Пермь,\nул. Революции...',
-      'date': '21.08.2025',
-      'price': '410 ₽',
-      'image': 'assets/images/placeholder_food.png',
-    },
-  ];
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final orders = await _apiService.getSellerOrders(1);
+      setState(() {
+        _orders = orders;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() => _isLoading = false);
+    }
+  }
+
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
+    return DateFormat('HH:mm').format(time);
+  }
+
+  Map<String, String> _getSellerInfo(int sellerId) {
+    return {
+      'nameRestaurant': 'Тестовый ресторан',
+      'address': 'Пермь, ул. Революции, 13',
+      'logo': 'assets/images/placeholder_restaurant.png',
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.background,
-      body: SafeArea(
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          image: DecorationImage(
+            image: AssetImage('assets/images/buyerHome.png'),
+            fit: BoxFit.cover,
+          ),
+        ),
         child: Column(
           children: [
-            _buildTopBar(),
+            _buildHeader(),
             Expanded(
-              child: _selectedIndex == 0
-                  ? _buildActiveOrders()
-                  : _buildHistoryOrders(),
+              child: _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : _buildContent(),
             ),
           ],
         ),
       ),
-      bottomNavigationBar: _buildBottomNavigationBar(),
     );
   }
 
-  Widget _buildTopBar() {
+  Widget _buildHeader() {
     return Container(
-      padding: const EdgeInsets.symmetric(
-        horizontal: AppSpacing.lg,
-        vertical: AppSpacing.md,
+      width: double.infinity,
+      height: 100,
+      decoration: BoxDecoration(
+        color: AppColors.primary,
+        borderRadius: const BorderRadius.only(
+          bottomLeft: Radius.circular(10),
+          bottomRight: Radius.circular(10),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x59000000),
+            offset: const Offset(0, 6),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
-          Row(
-            children: [
-              // Поиск
-              Expanded(
-                child: Container(
-                  height: 50,
-                  decoration: BoxDecoration(
-                    color: AppColors.backgroundWhite,
-                    borderRadius: BorderRadius.circular(25),
-                    border: Border.all(color: AppColors.border, width: 2),
-                  ),
-                  child: const TextField(
-                    decoration: InputDecoration(
-                      hintText: 'Поиск',
-                      hintStyle: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w400,
-                        color: Color(0xFF1A1C1B),
-                        fontFamily: 'Montserrat',
-                      ),
-                      border: InputBorder.none,
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: AppSpacing.md,
-                        vertical: AppSpacing.sm,
-                      ),
-                      suffixIcon: Icon(Icons.search, color: AppColors.primary),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: AppSpacing.md),
-              // Меню
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppColors.backgroundWhite,
-                  borderRadius: BorderRadius.circular(25),
-                  border: Border.all(color: AppColors.border, width: 2),
-                ),
-                child: const Icon(Icons.menu, color: AppColors.primary),
-              ),
-            ],
-          ),
-          const SizedBox(height: AppSpacing.md),
-          _buildTabs(),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTabs() {
-    return Row(
-      children: [
-        Expanded(
-          child: _buildTab('Активные', _selectedIndex == 0, () {
-            setState(() => _selectedIndex = 0);
-          }),
-        ),
-        const SizedBox(width: AppSpacing.md),
-        Expanded(
-          child: _buildTab('История', _selectedIndex == 1, () {
-            setState(() => _selectedIndex = 1);
-          }),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTab(String text, bool isSelected, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 50,
-        decoration: BoxDecoration(
-          color: isSelected ? AppColors.primary : AppColors.backgroundWhite,
-          borderRadius: BorderRadius.circular(25),
-          border: Border.all(color: AppColors.border, width: 2),
-        ),
-        child: Center(
-          child: Text(
-            text,
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w500,
-              color: isSelected ? AppColors.textWhite : AppColors.textPrimary,
-              fontFamily: 'Montserrat',
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildActiveOrders() {
-    if (_activeOrders.isEmpty) {
-      return Center(
-        child: Text(
-          'Нет активных заказов',
-          style: AppTextStyles.bodyLarge.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      itemCount: _activeOrders.length,
-      itemBuilder: (context, index) {
-        final order = _activeOrders[index];
-        return _buildOrderCard(order);
-      },
-    );
-  }
-
-  Widget _buildHistoryOrders() {
-    if (_historyOrders.isEmpty) {
-      return Center(
-        child: Text(
-          'История пуста',
-          style: AppTextStyles.bodyLarge.copyWith(
-            color: AppColors.textSecondary,
-          ),
-        ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(AppSpacing.lg),
-      itemCount: _historyOrders.length,
-      itemBuilder: (context, index) {
-        final order = _historyOrders[index];
-        return _buildOrderCard(order, isHistory: true);
-      },
-    );
-  }
-
-  Widget _buildOrderCard(Map<String, dynamic> order, {bool isHistory = false}) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: AppSpacing.md),
-      padding: const EdgeInsets.all(AppSpacing.md),
-      decoration: BoxDecoration(
-        color: AppColors.backgroundWhite,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: AppColors.border, width: 2),
-      ),
-      child: Row(
-        children: [
-          // Логотип ресторана
-          ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Container(
-              width: 80,
-              height: 80,
-              color: Colors.grey[300],
-              child: Image.asset(
-                order['image'],
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  return const Icon(Icons.restaurant, size: 40);
-                },
-              ),
-            ),
-          ),
-          const SizedBox(width: AppSpacing.md),
-          // Информация о заказе
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const Spacer(),
+          Padding(
+            padding: const EdgeInsets.only(left: 31, right: 29, bottom: 22),
+            child: Row(
               children: [
-                Text(
-                  order['name'],
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF1A1C1B),
+                Image.asset(
+                  'assets/images/searchgreen.svg',
+                  width: 25,
+                  height: 25,
+                ),
+                const Spacer(),
+                const Text(
+                  'Лента footbox',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
                     fontFamily: 'Montserrat',
+                    color: Color(0xFF7FA29A),
                   ),
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  order['location'],
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF7A9999),
-                    fontFamily: 'Montserrat',
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  order['date'],
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w400,
-                    color: Color(0xFF1A1C1B),
-                    fontFamily: 'Montserrat',
-                  ),
+                const Spacer(),
+                Image.asset(
+                  'assets/images/filtergreen.svg',
+                  width: 28,
+                  height: 20,
                 ),
               ],
             ),
           ),
-          // Цена
-          Text(
-            order['price'],
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w700,
-              color: AppColors.primary,
-              fontFamily: 'Montserrat',
-            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    if (_orders.isEmpty) {
+      return const Center(
+        child: Text(
+          'Нет доступных заказов',
+          style: TextStyle(
+            fontSize: 16,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomNavigationBar() {
-    return Container(
-      height: 80,
-      decoration: const BoxDecoration(
-        color: AppColors.bottomNavBar,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(30),
-          topRight: Radius.circular(30),
         ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-        children: [
-          _buildNavItem(Icons.home, true),
-          _buildNavItem(Icons.public, false),
-          _buildNavItem(Icons.calendar_today, false),
-          _buildNavItem(Icons.settings, false),
-        ],
-      ),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.only(top: 40),
+      itemCount: _orders.length,
+      itemBuilder: (context, index) {
+        final order = _orders[index];
+        final sellerInfo = _getSellerInfo(order.idSeller);
+        return _buildOrderCard(
+          order: order,
+          nameRestaurant: sellerInfo['nameRestaurant']!,
+          address: sellerInfo['address']!,
+          logo: sellerInfo['logo']!,
+        );
+      },
     );
   }
 
-  Widget _buildNavItem(IconData icon, bool isSelected) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: isSelected ? AppColors.backgroundWhite : Colors.transparent,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Icon(
-        icon,
-        color: isSelected ? AppColors.primary : AppColors.textWhite,
-        size: 28,
+  Widget _buildOrderCard({
+    required OrderModel order,
+    required String nameRestaurant,
+    required String address,
+    required String logo,
+  }) {
+    // Для демо используем одно изображение, но в реальности это будет список
+    final images = [
+      'assets/images/placeholder_food.png',
+      'assets/images/placeholder_food.png',
+      'assets/images/placeholder_food.png',
+    ];
+
+    return Center(
+      child: Container(
+        width: 331,
+        margin: const EdgeInsets.only(bottom: 30),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8F8),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59000000),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Карусель изображений
+            SizedBox(
+              height: 100,
+              child: Stack(
+                children: [
+                  PageView.builder(
+                    controller: _pageController,
+                    itemCount: images.length,
+                    onPageChanged: (index) {
+                      setState(() => _currentImageIndex = index);
+                    },
+                    itemBuilder: (context, index) {
+                      return ClipRRect(
+                        borderRadius: const BorderRadius.only(
+                          topLeft: Radius.circular(15),
+                          topRight: Radius.circular(15),
+                        ),
+                        child: Image.asset(images[index], fit: BoxFit.cover),
+                      );
+                    },
+                  ),
+                  // Кнопка закрытия
+                  Positioned(
+                    top: 8,
+                    right: 18,
+                    child: Container(
+                      width: 13,
+                      height: 13,
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                      child: const Icon(
+                        Icons.close,
+                        size: 10,
+                        color: Colors.black,
+                      ),
+                    ),
+                  ),
+                  // Индикаторы
+                  Positioned(
+                    bottom: 7,
+                    left: 0,
+                    right: 0,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(
+                        images.length,
+                        (index) => Container(
+                          width: _currentImageIndex == index ? 10 : 5,
+                          height: 5,
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFD9D9D9),
+                            borderRadius: BorderRadius.circular(2.5),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            // Информация о заказе
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 15),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Transform.translate(
+                    offset: const Offset(0, -23),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Container(
+                          width: 46,
+                          height: 46,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: const Color(0xFF10292A),
+                              width: 1.5,
+                            ),
+                            image: DecorationImage(
+                              image: AssetImage(logo),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 9),
+                        Text(
+                          nameRestaurant,
+                          style: const TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w300,
+                            fontFamily: 'Montserrat',
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Container(
+                    height: 40,
+                    padding: const EdgeInsets.symmetric(vertical: 2),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                address,
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w300,
+                                  fontFamily: 'Montserrat',
+                                  color: AppColors.textPrimary,
+                                ),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          'В продаже с ${_formatTime(order.saleTime)} до ${_formatTime(order.endTime)}',
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w300,
+                            fontFamily: 'Montserrat',
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                        const SizedBox(width: 5),
+                        Text(
+                          '${order.price.toStringAsFixed(0)} ₽',
+                          style: const TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Montserrat',
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 50,
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Забронировать
+                      },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: AppColors.primary,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                      child: const Text(
+                        'Забронировать',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Jura',
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

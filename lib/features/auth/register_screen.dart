@@ -9,7 +9,9 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
 
-// --- КЛАССЫ РИСОВАНИЯ (ВЫНЕСЕНЫ ИЗ КЛАССА СОСТОЯНИЯ) ---
+// --- ИСПРАВЛЕННЫЕ КЛАССЫ (ФОРМА "U" - КОВШ) ---
+
+// --- ФИНАЛЬНЫЙ ВАРИАНТ (ПЛОТНЫЙ И МЯГКИЙ) ---
 
 class NavShadowPainter extends CustomPainter {
   final bool isLeft;
@@ -18,15 +20,12 @@ class NavShadowPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    // Используем тот же путь, что и в клиппере
     final path = BottomNavClipper(isLeft: isLeft).getClip(size);
     final paint = Paint()
-      ..color = color
-          .withOpacity(0.2) // Мягкая тень
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12);
+      ..color = color.withOpacity(0.15)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 10);
 
-    // Сдвигаем тень чуть выше, чтобы она была видна над меню
-    canvas.drawPath(path.shift(const Offset(0, -4)), paint);
+    canvas.drawPath(path.shift(const Offset(0, -2)), paint);
   }
 
   @override
@@ -35,64 +34,69 @@ class NavShadowPainter extends CustomPainter {
 
 class BottomNavClipper extends CustomClipper<Path> {
   final bool isLeft;
+
   BottomNavClipper({required this.isLeft});
 
   @override
   Path getClip(Size size) {
     final path = Path();
+
     final double centerX = size.width * (isLeft ? 0.25 : 0.75);
 
-    // Геометрия как на первом фото (мягкий верх, узкий низ)
-    const double notchWidth = 39.0;
-    const double smoothOffset = 15.0;
-    const double notchDepth = 43.0;
+    // Параметры выреза
+
+    const double radius = 36.5; // Ширина выреза
+
+    const double depth = 40.0; // Глубина чаши
+
+    const double smooth = 15.0; // Плечо скругления верхних углов (было 15.0)
 
     path.moveTo(0, 0);
-    path.lineTo(centerX - notchWidth - smoothOffset, 0);
 
-    // Плавный вход
-    path.cubicTo(
-      centerX - notchWidth - 10,
-      0,
-      centerX - notchWidth,
-      2,
-      centerX - notchWidth,
-      15,
-    );
+    // 1. Подходим к вырезу
 
-    // Узкое дно (сведено к 22 пикселям от центра)
+    path.lineTo(centerX - radius - smooth, 0);
+
+    // 2. Левая сторона: один плавный переход от горизонтали к дну
+
     path.cubicTo(
-      centerX - notchWidth,
-      35,
-      centerX - 22,
-      notchDepth,
+      centerX - radius,
+
+      0, // CP1
+
+      centerX - radius,
+
+      depth, // CP2
+
       centerX,
-      notchDepth,
+
+      depth, // Конец: центр дна
     );
 
-    // Зеркально право
-    path.cubicTo(
-      centerX + 22,
-      notchDepth,
-      centerX + notchWidth,
-      35,
-      centerX + notchWidth,
-      15,
-    );
+    // 3. Правая сторона (зеркально)
 
     path.cubicTo(
-      centerX + notchWidth,
-      2,
-      centerX + notchWidth + 10,
+      centerX + radius,
+
+      depth,
+
+      centerX + radius,
+
       0,
-      centerX + notchWidth + smoothOffset,
+
+      centerX + radius + smooth,
+
       0,
     );
 
     path.lineTo(size.width, 0);
+
     path.lineTo(size.width, size.height);
+
     path.lineTo(0, size.height);
+
     path.close();
+
     return path;
   }
 

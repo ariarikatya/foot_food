@@ -22,6 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
+  bool _isBuyer = true; // true = покупатель, false = продавец
 
   @override
   void dispose() {
@@ -35,14 +36,28 @@ class _LoginScreenState extends State<LoginScreen> {
       setState(() => _isLoading = true);
 
       try {
-        // Тестовые данные: телефон +71234567890, пароль: test123
-        final result = await _apiService.loginUser(
-          phone: _phoneController.text,
-          password: _passwordController.text,
-        );
+        if (_isBuyer) {
+          // Авторизация покупателя
+          // Тестовые данные: телефон +71234567890, пароль: test123
+          final result = await _apiService.loginUser(
+            phone: _phoneController.text,
+            password: _passwordController.text,
+          );
 
-        if (mounted) {
-          Navigator.of(context).pushReplacementNamed('/buyer_home');
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/buyer_home');
+          }
+        } else {
+          // Авторизация продавца
+          // Тестовые данные: email seller@test.com, пароль: seller123
+          final result = await _apiService.loginSeller(
+            email: _phoneController.text,
+            password: _passwordController.text,
+          );
+
+          if (mounted) {
+            Navigator.of(context).pushReplacementNamed('/seller_home');
+          }
         }
       } catch (e) {
         if (mounted) {
@@ -87,8 +102,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const SizedBox(height: AppSpacing.xl),
                         _buildHeader(),
+                        const SizedBox(height: AppSpacing.md),
+                        _buildUserTypeToggle(),
                         const SizedBox(height: AppSpacing.xl),
-                        _buildPhoneField(),
+                        _buildLoginField(),
                         const SizedBox(height: AppSpacing.md),
                         _buildPasswordField(),
                         const SizedBox(height: AppSpacing.sm),
@@ -142,18 +159,77 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildHeader() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: [Text('Авторизация покупателя', style: AppTextStyles.h2)],
+      children: [
+        Text(
+          _isBuyer ? 'Авторизация покупателя' : 'Авторизация продавца',
+          style: AppTextStyles.h2,
+        ),
+      ],
     );
   }
 
-  Widget _buildPhoneField() {
+  Widget _buildUserTypeToggle() {
+    return Row(
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _isBuyer = true),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: _isBuyer ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              child: Center(
+                child: Text(
+                  'Покупатель',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: _isBuyer ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: GestureDetector(
+            onTap: () => setState(() => _isBuyer = false),
+            child: Container(
+              padding: const EdgeInsets.symmetric(vertical: 12),
+              decoration: BoxDecoration(
+                color: !_isBuyer ? AppColors.primary : Colors.transparent,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(color: AppColors.primary, width: 2),
+              ),
+              child: Center(
+                child: Text(
+                  'Продавец',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: !_isBuyer ? Colors.white : AppColors.primary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildLoginField() {
     return CustomTextField(
       controller: _phoneController,
-      hintText: 'Номер телефона',
-      keyboardType: TextInputType.phone,
+      hintText: _isBuyer ? 'Номер телефона' : 'Email',
+      keyboardType: _isBuyer ? TextInputType.phone : TextInputType.emailAddress,
       validator: (value) {
         if (value == null || value.isEmpty) {
-          return 'Введите номер телефона';
+          return _isBuyer ? 'Введите номер телефона' : 'Введите email';
         }
         return null;
       },
