@@ -30,10 +30,23 @@ class CustomButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    final child = isOutlined ? _buildOutlinedButton() : _buildFilledButton();
+
+    return Container(
       width: width,
       height: height ?? AppSpacing.buttonHeight,
-      child: isOutlined ? _buildOutlinedButton() : _buildFilledButton(),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x4D051F20), // 051F20 с 30% прозрачностью
+            offset: const Offset(4, 8),
+            blurRadius: 12,
+            spreadRadius: 0,
+          ),
+        ],
+      ),
+      child: child,
     );
   }
 
@@ -58,6 +71,7 @@ class CustomButton extends StatelessWidget {
     return OutlinedButton(
       onPressed: isLoading ? null : onPressed,
       style: OutlinedButton.styleFrom(
+        backgroundColor: Colors.white,
         foregroundColor: AppColors.primary,
         side: const BorderSide(color: AppColors.border, width: 2),
         shape: RoundedRectangleBorder(

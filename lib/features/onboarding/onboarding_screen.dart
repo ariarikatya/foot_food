@@ -66,7 +66,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
       backgroundColor: const Color(0xFF7FA29A),
       body: Stack(
         children: [
-          // PageView с контентом
           PageView.builder(
             controller: _pageController,
             onPageChanged: (index) {
@@ -77,8 +76,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               return _buildPage(_pages[index]);
             },
           ),
-
-          // Нижняя панель навигации
           Positioned(
             left: 0,
             right: 0,
@@ -91,24 +88,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Widget _buildPage(Map<String, String> pageData) {
-    // Получаем высоту экрана для расчета пропорций
     final double screenHeight = MediaQuery.of(context).size.height;
 
     return Stack(
       children: [
-        // --- ИЗМЕНЕНИЯ ЗДЕСЬ ---
-        // Вместо Positioned.fill используем Positioned с привязкой к низу
         Positioned(
           left: 0,
           right: 0,
           bottom: 0,
-          // Задаем высоту картинки.
-          // 0.45 означает 45% от высоты экрана.
-          // Если нужно еще ниже/уже - поставьте 0.40. Если выше - 0.50.
-          height: screenHeight * 0.45,
+          height: screenHeight * 0.50,
           child: Image.asset(
             'assets/images/firstenterRoands.png',
-            // BoxFit.fill растянет картинку ровно по размеру контейнера (на 45% снизу)
             fit: BoxFit.fill,
             alignment: Alignment.bottomCenter,
             errorBuilder: (context, error, stackTrace) {
@@ -116,20 +106,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             },
           ),
         ),
-        // -----------------------
-
-        // Контент поверх фона
         SafeArea(
           child: Column(
             children: [
-              // Изображение - занимает верхнюю часть
               Expanded(
                 flex: 5,
                 child: Center(
                   child: Image.asset(
                     pageData['image']!,
-                    // Немного уменьшил ширину (с 0.7 до 0.65), чтобы еда смотрелась аккуратнее,
-                    // но это можно вернуть обратно, если не понравится.
                     width: MediaQuery.of(context).size.width * 0.8,
                     height: MediaQuery.of(context).size.height * 0.4,
                     fit: BoxFit.contain,
@@ -153,18 +137,28 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   ),
                 ),
               ),
-
-              // Текстовый блок - занимает нижнюю часть
               Expanded(
-                flex: 3, // Это примерно соответствует высоте фона (3/8 экрана)
+                flex: 3,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Subtitle
+                      // Subtitle - Montserrat Medium 28
                       Text(
                         pageData['subtitle']!,
+                        style: const TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Montserrat',
+                          color: Colors.white,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 15),
+                      // Title - Montserrat Light 20
+                      Text(
+                        pageData['title']!,
                         style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w300,
@@ -173,26 +167,13 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 15),
-                      // Title
-                      Text(
-                        pageData['title']!,
-                        style: const TextStyle(
-                          fontSize:
-                              16, // Немного уменьшил шрифт, чтобы текст влезал лучше (было 28, что очень много для длинного текста)
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Montserrat',
-                          color: Colors.white,
-                        ),
-                        textAlign: TextAlign.center,
-                      ),
+                      // Расстояние 55 до нижней навигации
+                      const SizedBox(height: 0),
                     ],
                   ),
                 ),
               ),
-
-              // Отступ снизу для навигационной панели
-              const SizedBox(height: 80),
+              const SizedBox(height: 20),
             ],
           ),
         ),
@@ -207,7 +188,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            // Кнопка "Пропустить"
             GestureDetector(
               onTap: _navigateToAuth,
               child: const Text(
@@ -220,8 +200,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-            // Индикаторы страниц
             Row(
               mainAxisSize: MainAxisSize.min,
               children: List.generate(
@@ -237,8 +215,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 ),
               ),
             ),
-
-            // Кнопка "Дальше"
             GestureDetector(
               onTap: _nextPage,
               child: Text(

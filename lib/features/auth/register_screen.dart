@@ -9,10 +9,6 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
 
-// --- ИСПРАВЛЕННЫЕ КЛАССЫ (ФОРМА "U" - КОВШ) ---
-
-// --- ФИНАЛЬНЫЙ ВАРИАНТ (ПЛОТНЫЙ И МЯГКИЙ) ---
-
 class NavShadowPainter extends CustomPainter {
   final bool isLeft;
   final Color color;
@@ -40,61 +36,25 @@ class BottomNavClipper extends CustomClipper<Path> {
   @override
   Path getClip(Size size) {
     final path = Path();
-
     final double centerX = size.width * (isLeft ? 0.25 : 0.75);
-
-    // Параметры выреза
-
-    const double radius = 36.5; // Ширина выреза
-
-    const double depth = 40.0; // Глубина чаши
-
-    const double smooth = 15.0; // Плечо скругления верхних углов (было 15.0)
+    const double radius = 36.5;
+    const double depth = 40.0;
+    const double smooth = 15.0;
 
     path.moveTo(0, 0);
-
-    // 1. Подходим к вырезу
-
     path.lineTo(centerX - radius - smooth, 0);
-
-    // 2. Левая сторона: один плавный переход от горизонтали к дну
-
-    path.cubicTo(
-      centerX - radius,
-
-      0, // CP1
-
-      centerX - radius,
-
-      depth, // CP2
-
-      centerX,
-
-      depth, // Конец: центр дна
-    );
-
-    // 3. Правая сторона (зеркально)
-
+    path.cubicTo(centerX - radius, 0, centerX - radius, depth, centerX, depth);
     path.cubicTo(
       centerX + radius,
-
       depth,
-
       centerX + radius,
-
       0,
-
       centerX + radius + smooth,
-
       0,
     );
-
     path.lineTo(size.width, 0);
-
     path.lineTo(size.width, size.height);
-
     path.lineTo(0, size.height);
-
     path.close();
 
     return path;
@@ -103,8 +63,6 @@ class BottomNavClipper extends CustomClipper<Path> {
   @override
   bool shouldReclip(BottomNavClipper old) => old.isLeft != isLeft;
 }
-
-// --- ОСНОВНОЙ КЛАСС ЭКРАНА ---
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({super.key});
@@ -119,7 +77,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
   bool _isBuyer = true;
   bool _isLoading = false;
-  bool _agreedToTerms = false;
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
@@ -177,7 +134,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       _isBuyer ? 'assets/images/regcli.png' : 'assets/images/regsell.png';
 
   Future<void> _handleRegister() async {
-    // Твоя логика регистрации
+    // Ваша логика регистрации
   }
 
   Future<void> _pickImage() async {
@@ -249,8 +206,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               onPressed: _isLoading ? null : _handleRegister,
                               isLoading: _isLoading,
                             ),
-                            const SizedBox(height: AppSpacing.md),
-                            _buildTermsCheckbox(),
                             const SizedBox(height: 160),
                           ],
                         ),
@@ -271,8 +226,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
     );
   }
-
-  // --- ТВОИ МЕТОДЫ ИНТЕРФЕЙСА (ВОССТАНОВЛЕНО) ---
 
   Widget _buildAppBar() {
     return Padding(
@@ -499,6 +452,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
       onPressed: onToggle,
     ),
   );
+
   Widget _confirmPasswordField(
     TextEditingController controller,
     FocusNode focusNode,
@@ -517,18 +471,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       ),
       onPressed: onToggle,
     ),
-  );
-  Widget _buildTermsCheckbox() => Row(
-    children: [
-      Checkbox(
-        value: _agreedToTerms,
-        onChanged: (v) => setState(() => _agreedToTerms = v ?? false),
-        activeColor: AppColors.primary,
-      ),
-      Expanded(
-        child: Text('Согласен с условиями', style: AppTextStyles.bodySmall),
-      ),
-    ],
   );
 
   Widget _buildFloatingNavItem({
@@ -580,7 +522,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          // ТЕНЬ
           Positioned(
             left: 0,
             right: 0,
@@ -590,7 +531,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               painter: NavShadowPainter(isLeft: _isBuyer, color: Colors.black),
             ),
           ),
-          // МЕНЮ
           Positioned(
             left: 0,
             right: 0,
@@ -618,7 +558,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
               ),
             ),
           ),
-          // КРУГИ
           Positioned(
             left: width * 0.25 - 35,
             bottom: barHeight - 35,
@@ -642,8 +581,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
     );
   }
 }
-
-// --- ВОССТАНОВЛЕННЫЙ ЭКРАН КАРТЫ ---
 
 class AddressMapScreen extends StatefulWidget {
   final Function(String) onAddressSelected;

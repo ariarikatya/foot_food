@@ -7,6 +7,7 @@ import 'features/onboarding/onboarding_screen.dart';
 import 'features/auth/auth_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/auth/login_screen.dart';
+import 'features/auth/password_recovery_screen.dart';
 import 'features/home/buyer_home_screen.dart';
 import 'features/home/seller_home_screen.dart';
 
@@ -109,6 +110,7 @@ class FootFoodApp extends StatelessWidget {
         '/auth': (context) => const AuthScreen(),
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
+        '/password_recovery': (context) => const PasswordRecoveryScreen(),
         '/buyer_home': (context) => const BuyerHomeScreen(),
         '/seller_home': (context) => const SellerHomeScreen(),
       },

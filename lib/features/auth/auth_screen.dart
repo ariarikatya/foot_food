@@ -41,7 +41,7 @@ class AuthScreen extends StatelessWidget {
                 CustomButton(
                   text: 'Регистрация',
                   fontSize: 28,
-                  fontWeight: FontWeight.w500, // Montserrat Medium
+                  fontWeight: FontWeight.w500,
                   onPressed: () {
                     Navigator.of(context).pushNamed('/register');
                   },
@@ -52,7 +52,7 @@ class AuthScreen extends StatelessWidget {
                 CustomButton(
                   text: 'Авторизация',
                   fontSize: 28,
-                  fontWeight: FontWeight.w500, // Montserrat Medium
+                  fontWeight: FontWeight.w500,
                   isOutlined: true,
                   onPressed: () {
                     Navigator.of(context).pushNamed('/login');

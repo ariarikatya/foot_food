@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isBuyer = true; // true = покупатель, false = продавец
+  bool _isBuyer = true;
 
   @override
   void dispose() {
@@ -37,8 +37,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         if (_isBuyer) {
-          // Авторизация покупателя
-          // Тестовые данные: телефон +71234567890, пароль: test123
           final result = await _apiService.loginUser(
             phone: _phoneController.text,
             password: _passwordController.text,
@@ -48,8 +46,6 @@ class _LoginScreenState extends State<LoginScreen> {
             Navigator.of(context).pushReplacementNamed('/buyer_home');
           }
         } else {
-          // Авторизация продавца
-          // Тестовые данные: email seller@test.com, пароль: seller123
           final result = await _apiService.loginSeller(
             email: _phoneController.text,
             password: _passwordController.text,
@@ -160,9 +156,15 @@ class _LoginScreenState extends State<LoginScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Montserrat Light 20
         Text(
           _isBuyer ? 'Авторизация покупателя' : 'Авторизация продавца',
-          style: AppTextStyles.h2,
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Montserrat',
+            color: AppColors.textPrimary,
+          ),
         ),
       ],
     );
@@ -262,17 +264,18 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildForgotPassword() {
-    return Align(
-      alignment: Alignment.centerRight,
+    return Center(
       child: TextButton(
         onPressed: () {
-          // Восстановление пароля
+          Navigator.of(context).pushNamed('/password_recovery');
         },
-        child: Text(
+        child: const Text(
           'Забыли пароль?',
-          style: AppTextStyles.bodyMedium.copyWith(
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Montserrat',
             color: AppColors.primary,
-            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -296,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
           Text('Еще нет аккаунта? Тогда ', style: AppTextStyles.bodyMedium),
           GestureDetector(
             onTap: () {
-              Navigator.of(context).pushReplacementNamed('/register');
+              Navigator.of(context).pushNamed('/register');
             },
             child: Text(
               'ЗАРЕГИСТРИРУЙТЕСЬ',
