@@ -4,10 +4,11 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
+import 'widgets/login_form.dart';
+import 'widgets/user_type_toggle.dart';
 
-/// Экран авторизации
+/// Чистый экран авторизации
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -18,15 +19,16 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _apiService = MockApiService();
-  final _phoneController = TextEditingController();
+  final _loginController = TextEditingController();
   final _passwordController = TextEditingController();
+
   bool _obscurePassword = true;
   bool _isLoading = false;
   bool _isBuyer = true;
 
   @override
   void dispose() {
-    _phoneController.dispose();
+    _loginController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -37,20 +39,18 @@ class _LoginScreenState extends State<LoginScreen> {
 
       try {
         if (_isBuyer) {
-          final result = await _apiService.loginUser(
-            phone: _phoneController.text,
+          await _apiService.loginUser(
+            phone: _loginController.text,
             password: _passwordController.text,
           );
-
           if (mounted) {
             Navigator.of(context).pushReplacementNamed('/buyer_home');
           }
         } else {
-          final result = await _apiService.loginSeller(
-            email: _phoneController.text,
+          await _apiService.loginSeller(
+            email: _loginController.text,
             password: _passwordController.text,
           );
-
           if (mounted) {
             Navigator.of(context).pushReplacementNamed('/seller_home');
           }
@@ -99,15 +99,29 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         _buildHeader(),
                         const SizedBox(height: AppSpacing.md),
-                        _buildUserTypeToggle(),
+                        UserTypeToggle(
+                          isBuyer: _isBuyer,
+                          onBuyerTap: () => setState(() => _isBuyer = true),
+                          onSellerTap: () => setState(() => _isBuyer = false),
+                        ),
                         const SizedBox(height: AppSpacing.xl),
-                        _buildLoginField(),
-                        const SizedBox(height: AppSpacing.md),
-                        _buildPasswordField(),
+                        LoginForm(
+                          loginController: _loginController,
+                          passwordController: _passwordController,
+                          isBuyer: _isBuyer,
+                          obscurePassword: _obscurePassword,
+                          onTogglePassword: () => setState(
+                            () => _obscurePassword = !_obscurePassword,
+                          ),
+                        ),
                         const SizedBox(height: AppSpacing.sm),
                         _buildForgotPassword(),
                         const SizedBox(height: AppSpacing.xl),
-                        _buildLoginButton(),
+                        CustomButton(
+                          text: 'Войти',
+                          onPressed: _isLoading ? null : _handleLogin,
+                          isLoading: _isLoading,
+                        ),
                         const SizedBox(height: AppSpacing.lg),
                         _buildRegisterLink(),
                         const SizedBox(height: AppSpacing.lg),
@@ -153,112 +167,13 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildHeader() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        // Montserrat Light 20
-        Text(
-          _isBuyer ? 'Авторизация покупателя' : 'Авторизация продавца',
-          style: const TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w300,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildUserTypeToggle() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _isBuyer = true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: _isBuyer ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  'Покупатель',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _isBuyer ? Colors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _isBuyer = false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: !_isBuyer ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  'Продавец',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: !_isBuyer ? Colors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildLoginField() {
-    return CustomTextField(
-      controller: _phoneController,
-      hintText: _isBuyer ? 'Номер телефона' : 'Email',
-      keyboardType: _isBuyer ? TextInputType.phone : TextInputType.emailAddress,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return _isBuyer ? 'Введите номер телефона' : 'Введите email';
-        }
-        return null;
-      },
-    );
-  }
-
-  Widget _buildPasswordField() {
-    return CustomTextField(
-      controller: _passwordController,
-      hintText: 'Пароль',
-      obscureText: _obscurePassword,
-      validator: (value) {
-        if (value == null || value.isEmpty) {
-          return 'Введите пароль';
-        }
-        return null;
-      },
-      suffixIcon: IconButton(
-        icon: Icon(
-          _obscurePassword ? Icons.visibility_off : Icons.visibility,
-          color: AppColors.textSecondary,
-        ),
-        onPressed: () {
-          setState(() {
-            _obscurePassword = !_obscurePassword;
-          });
-        },
+    return Text(
+      _isBuyer ? 'Авторизация покупателя' : 'Авторизация продавца',
+      style: const TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w300,
+        fontFamily: 'Montserrat',
+        color: AppColors.textPrimary,
       ),
     );
   }
@@ -279,14 +194,6 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildLoginButton() {
-    return CustomButton(
-      text: 'Войти',
-      onPressed: _isLoading ? null : _handleLogin,
-      isLoading: _isLoading,
     );
   }
 

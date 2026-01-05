@@ -4,8 +4,9 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
+import 'widgets/user_type_toggle.dart';
 
-/// Экран восстановления пароля
+/// Чистый экран восстановления пароля
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
 
@@ -17,6 +18,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _phoneController = TextEditingController();
+
   bool _isLoading = false;
   bool _isBuyer = true;
 
@@ -31,6 +33,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
 
+      // Имитация отправки запроса
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
@@ -76,56 +79,17 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: AppSpacing.xl),
-                        const Text(
-                          'Восстановление пароля',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.w300,
-                            fontFamily: 'Montserrat',
-                            color: AppColors.textPrimary,
-                          ),
-                        ),
+                        _buildHeader(),
                         const SizedBox(height: AppSpacing.md),
-                        Text(
-                          _isBuyer
-                              ? 'Введите номер телефона, и мы отправим инструкции по восстановлению пароля'
-                              : 'Введите email, и мы отправим инструкции по восстановлению пароля',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w300,
-                            fontFamily: 'Montserrat',
-                            color: AppColors.textSecondary,
-                          ),
-                        ),
+                        _buildDescription(),
                         const SizedBox(height: AppSpacing.md),
-                        _buildUserTypeToggle(),
+                        UserTypeToggle(
+                          isBuyer: _isBuyer,
+                          onBuyerTap: () => setState(() => _isBuyer = true),
+                          onSellerTap: () => setState(() => _isBuyer = false),
+                        ),
                         const SizedBox(height: AppSpacing.xl),
-                        _isBuyer
-                            ? CustomTextField(
-                                controller: _phoneController,
-                                hintText: 'Номер телефона',
-                                keyboardType: TextInputType.phone,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Введите номер телефона';
-                                  }
-                                  return null;
-                                },
-                              )
-                            : CustomTextField(
-                                controller: _emailController,
-                                hintText: 'Email',
-                                keyboardType: TextInputType.emailAddress,
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Введите email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Неверный формат email';
-                                  }
-                                  return null;
-                                },
-                              ),
+                        _buildInputField(),
                         const SizedBox(height: AppSpacing.xl),
                         CustomButton(
                           text: 'Отправить',
@@ -173,57 +137,60 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     );
   }
 
-  Widget _buildUserTypeToggle() {
-    return Row(
-      children: [
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _isBuyer = true),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: _isBuyer ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  'Покупатель',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: _isBuyer ? Colors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-        const SizedBox(width: 10),
-        Expanded(
-          child: GestureDetector(
-            onTap: () => setState(() => _isBuyer = false),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 12),
-              decoration: BoxDecoration(
-                color: !_isBuyer ? AppColors.primary : Colors.transparent,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.primary, width: 2),
-              ),
-              child: Center(
-                child: Text(
-                  'Продавец',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
-                    color: !_isBuyer ? Colors.white : AppColors.primary,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+  Widget _buildHeader() {
+    return const Text(
+      'Восстановление пароля',
+      style: TextStyle(
+        fontSize: 20,
+        fontWeight: FontWeight.w300,
+        fontFamily: 'Montserrat',
+        color: AppColors.textPrimary,
+      ),
     );
+  }
+
+  Widget _buildDescription() {
+    return Text(
+      _isBuyer
+          ? 'Введите номер телефона, и мы отправим инструкции по восстановлению пароля'
+          : 'Введите email, и мы отправим инструкции по восстановлению пароля',
+      style: const TextStyle(
+        fontSize: 16,
+        fontWeight: FontWeight.w300,
+        fontFamily: 'Montserrat',
+        color: AppColors.textSecondary,
+      ),
+    );
+  }
+
+  Widget _buildInputField() {
+    if (_isBuyer) {
+      return CustomTextField(
+        controller: _phoneController,
+        hintText: 'Номер телефона',
+        keyboardType: TextInputType.phone,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Введите номер телефона';
+          }
+          return null;
+        },
+      );
+    } else {
+      return CustomTextField(
+        controller: _emailController,
+        hintText: 'Email',
+        keyboardType: TextInputType.emailAddress,
+        validator: (value) {
+          if (value == null || value.isEmpty) {
+            return 'Введите email';
+          }
+          if (!value.contains('@')) {
+            return 'Неверный формат email';
+          }
+          return null;
+        },
+      );
+    }
   }
 }
