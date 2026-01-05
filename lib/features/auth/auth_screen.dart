@@ -27,12 +27,14 @@ class AuthScreen extends StatelessWidget {
               children: [
                 const Spacer(),
 
-                // Логотип 223x128
-                Image.asset(
-                  'assets/images/logodark.png',
-                  width: 223,
-                  height: 128,
-                  fit: BoxFit.contain,
+                // Логотип 223x128 по центру
+                Center(
+                  child: Image.asset(
+                    'assets/images/logodark.png',
+                    width: 223,
+                    height: 128,
+                    fit: BoxFit.contain,
+                  ),
                 ),
 
                 const SizedBox(height: AppSpacing.xxl),

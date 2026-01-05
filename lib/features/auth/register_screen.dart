@@ -377,6 +377,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           ),
         ),
         const SizedBox(height: 30),
+        // Поле Логотип БЕЗ тени
         GestureDetector(
           onTap: _pickImage,
           child: Container(

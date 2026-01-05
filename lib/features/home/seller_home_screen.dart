@@ -120,7 +120,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   Widget _buildHeader() {
     return Container(
       width: double.infinity,
-      height: 150,
       decoration: BoxDecoration(
         color: AppColors.primary,
         borderRadius: const BorderRadius.only(
@@ -136,68 +135,60 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
           ),
         ],
       ),
-      child: Column(
-        children: [
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(left: 26, right: 26, bottom: 20),
-            child: Container(
-              height: 50,
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(50),
+      child: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.only(
+            left: 26,
+            right: 26,
+            top: 10,
+            bottom: 20,
+          ),
+          child: Container(
+            height: 50,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(50),
+            ),
+            child: TextField(
+              controller: _searchController,
+              textAlignVertical: TextAlignVertical.center,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: Colors.black,
               ),
-              // Убираем padding у контейнера, чтобы TextField заполнял все пространство
-              child: TextField(
-                controller: _searchController,
-                // Это свойство центрирует текст по вертикали относительно иконки
-                textAlignVertical: TextAlignVertical.center,
-                style: const TextStyle(
+              decoration: InputDecoration(
+                hintText: 'Поиск',
+                hintStyle: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w400,
                   fontFamily: 'Montserrat',
-                  color: Colors.black,
+                  color: Colors.grey,
                 ),
-                decoration: InputDecoration(
-                  hintText: 'Поиск',
-                  hintStyle: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Montserrat',
-                    color: Colors.grey,
-                  ),
-                  // Явно убираем все виды обводок (рамок)
-                  border: InputBorder.none,
-                  enabledBorder: InputBorder.none,
-                  focusedBorder: InputBorder.none,
-                  errorBorder: InputBorder.none,
-                  disabledBorder: InputBorder.none,
-
-                  isDense: true,
-                  // Отступ текста слева (как было horizontal: 24)
-                  contentPadding: const EdgeInsets.only(left: 24),
-
-                  // Вставляем иконку внутрь поля
-                  suffixIconConstraints: const BoxConstraints(
-                    minHeight: 24,
-                    minWidth: 48, // Минимальная ширина для области клика
-                  ),
-                  suffixIcon: Padding(
-                    padding: const EdgeInsets.only(
-                      right: 24,
-                      left: 10,
-                    ), // Отступы иконки
-                    child: SvgPicture.asset(
-                      'assets/images/search.svg',
-                      width: 24,
-                      height: 24,
-                    ),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                isDense: true,
+                contentPadding: const EdgeInsets.only(left: 24, right: 24),
+                suffixIconConstraints: const BoxConstraints(
+                  minHeight: 24,
+                  minWidth: 48,
+                ),
+                suffixIcon: Padding(
+                  padding: const EdgeInsets.only(right: 24, left: 10),
+                  child: SvgPicture.asset(
+                    'assets/images/search.svg',
+                    width: 24,
+                    height: 24,
                   ),
                 ),
               ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
@@ -274,6 +265,12 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             address: sellerInfo['address']!,
             date: _formatDate(order.cookingTime),
             price: order.price,
+            onTap: () => _showExpandedActiveCard(
+              context,
+              order,
+              sellerInfo['nameRestaurant']!,
+              sellerInfo['address']!,
+            ),
           );
         },
       ),
@@ -307,7 +304,12 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
             address: sellerInfo['address']!,
             date: _formatDate(order.bayTime),
             price: order.price,
-            historyOrder: order,
+            onTap: () => _showExpandedHistoryCard(
+              context,
+              order,
+              sellerInfo['nameRestaurant']!,
+              sellerInfo['address']!,
+            ),
           );
         },
       ),
@@ -319,19 +321,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     required String address,
     required String date,
     required double price,
-    OrderHistoryModel? historyOrder,
+    required VoidCallback onTap,
   }) {
     return GestureDetector(
-      onTap: () {
-        if (historyOrder != null) {
-          _showExpandedHistoryCard(
-            context,
-            historyOrder,
-            nameRestaurant,
-            address,
-          );
-        }
-      },
+      onTap: onTap,
       child: Container(
         width: 147,
         height: 150,
@@ -406,6 +399,278 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     );
   }
 
+  void _showExpandedActiveCard(
+    BuildContext context,
+    OrderModel order,
+    String nameRestaurant,
+    String address,
+  ) {
+    final PageController dialogPageController = PageController();
+    int currentImageIndex = 0;
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withOpacity(0.5),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => Stack(
+          children: [
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            Positioned(top: 0, left: 0, right: 0, child: _buildHeader()),
+            Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+              child: Container(
+                height: 480,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFCF8F8),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0x59051F20),
+                      offset: const Offset(4, 8),
+                      blurRadius: 12,
+                      spreadRadius: 0,
+                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: dialogPageController,
+                            itemCount: 3,
+                            onPageChanged: (index) {
+                              setDialogState(() => currentImageIndex = index);
+                            },
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  topRight: Radius.circular(15),
+                                ),
+                                child: Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.fastfood,
+                                    size: 50,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                          Positioned(
+                            top: 8,
+                            right: 18,
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 7,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                3,
+                                (index) => Container(
+                                  width: currentImageIndex == index ? 10 : 5,
+                                  height: 5,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD9D9D9),
+                                    borderRadius: BorderRadius.circular(2.5),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Container(
+                                  width: 53,
+                                  height: 53,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF10292A),
+                                      width: 1.5,
+                                    ),
+                                    color: Colors.grey[300],
+                                  ),
+                                  child: const Icon(
+                                    Icons.restaurant,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                                const SizedBox(width: 9),
+                                Expanded(
+                                  child: Text(
+                                    nameRestaurant,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w300,
+                                      fontFamily: 'Montserrat',
+                                      color: AppColors.textPrimary,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            Text(
+                              address,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                                fontFamily: 'Montserrat',
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Номер заказа: ${order.numberOrder}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                                fontFamily: 'Montserrat',
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(
+                                  'Изготовлено: ${_formatTime(order.cookingTime)}',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Jura',
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                                Text(
+                                  'В продаже до: ${_formatTime(order.endTime)}',
+                                  style: const TextStyle(
+                                    fontSize: 9,
+                                    fontWeight: FontWeight.w600,
+                                    fontFamily: 'Jura',
+                                    color: AppColors.textPrimary,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Описание: ${order.description ?? "Нет описания"}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w300,
+                                        fontFamily: 'Montserrat',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Text(
+                                      '${order.price.toStringAsFixed(0)} ₽',
+                                      style: const TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.w500,
+                                        fontFamily: 'Montserrat',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 50,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Выдать',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Jura',
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _showExpandedHistoryCard(
     BuildContext context,
     OrderHistoryModel order,
@@ -419,339 +684,326 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       context: context,
       barrierColor: Colors.black.withOpacity(0.5),
       builder: (context) => StatefulBuilder(
-        builder: (context, setState) => BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-          child: Dialog(
-            backgroundColor: Colors.transparent,
-            insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-            child: Stack(
-              children: [
-                _buildHeader(),
-                Center(
-                  child: Container(
-                    height: 480,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFCF8F8),
-                      borderRadius: BorderRadius.circular(15),
-                      boxShadow: [
-                        BoxShadow(
-                          color: const Color(0x59051F20),
-                          offset: const Offset(4, 8),
-                          blurRadius: 12,
-                          spreadRadius: 0,
-                        ),
-                      ],
+        builder: (context, setDialogState) => Stack(
+          children: [
+            Positioned.fill(
+              child: BackdropFilter(
+                filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            Positioned(top: 0, left: 0, right: 0, child: _buildHeader()),
+            Dialog(
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+              child: Container(
+                height: 480,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFCF8F8),
+                  borderRadius: BorderRadius.circular(15),
+                  boxShadow: [
+                    BoxShadow(
+                      color: const Color(0x59051F20),
+                      offset: const Offset(4, 8),
+                      blurRadius: 12,
+                      spreadRadius: 0,
                     ),
-                    child: Column(
-                      children: [
-                        // Карусель изображений
-                        SizedBox(
-                          height: 100,
-                          child: Stack(
-                            children: [
-                              PageView.builder(
-                                controller: dialogPageController,
-                                itemCount: 3,
-                                onPageChanged: (index) {
-                                  setState(() => currentImageIndex = index);
-                                },
-                                itemBuilder: (context, index) {
-                                  return ClipRRect(
-                                    borderRadius: const BorderRadius.only(
-                                      topLeft: Radius.circular(15),
-                                      topRight: Radius.circular(15),
-                                    ),
-                                    child: Container(
-                                      color: Colors.grey[300],
-                                      child: const Icon(
-                                        Icons.fastfood,
-                                        size: 50,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                              Positioned(
-                                top: 8,
-                                right: 18,
-                                child: GestureDetector(
-                                  onTap: () => Navigator.pop(context),
-                                  child: Container(
-                                    width: 14,
-                                    height: 14,
-                                    decoration: BoxDecoration(
-                                      color: Colors.transparent,
-                                      borderRadius: BorderRadius.circular(2),
-                                    ),
-                                    child: const Icon(
-                                      Icons.close,
-                                      size: 14,
-                                      color: Colors.white,
-                                    ),
+                  ],
+                ),
+                child: Column(
+                  children: [
+                    SizedBox(
+                      height: 100,
+                      child: Stack(
+                        children: [
+                          PageView.builder(
+                            controller: dialogPageController,
+                            itemCount: 3,
+                            onPageChanged: (index) {
+                              setDialogState(() => currentImageIndex = index);
+                            },
+                            itemBuilder: (context, index) {
+                              return ClipRRect(
+                                borderRadius: const BorderRadius.only(
+                                  topLeft: Radius.circular(15),
+                                  topRight: Radius.circular(15),
+                                ),
+                                child: Container(
+                                  color: Colors.grey[300],
+                                  child: const Icon(
+                                    Icons.fastfood,
+                                    size: 50,
+                                    color: Colors.grey,
                                   ),
                                 ),
-                              ),
-                              Positioned(
-                                bottom: 7,
-                                left: 0,
-                                right: 0,
-                                child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: List.generate(
-                                    3,
-                                    (index) => Container(
-                                      width: currentImageIndex == index
-                                          ? 10
-                                          : 5,
-                                      height: 5,
-                                      margin: const EdgeInsets.symmetric(
-                                        horizontal: 2,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: const Color(0xFFD9D9D9),
-                                        borderRadius: BorderRadius.circular(
-                                          2.5,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
+                              );
+                            },
                           ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(15),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
+                          Positioned(
+                            top: 8,
+                            right: 18,
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Container(
+                                width: 14,
+                                height: 14,
+                                decoration: BoxDecoration(
+                                  color: Colors.transparent,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                                child: const Icon(
+                                  Icons.close,
+                                  size: 14,
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            bottom: 7,
+                            left: 0,
+                            right: 0,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                3,
+                                (index) => Container(
+                                  width: currentImageIndex == index ? 10 : 5,
+                                  height: 5,
+                                  margin: const EdgeInsets.symmetric(
+                                    horizontal: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFD9D9D9),
+                                    borderRadius: BorderRadius.circular(2.5),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.all(15),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const SizedBox(height: 5),
+                            Row(
                               children: [
-                                Row(
-                                  children: [
-                                    Container(
-                                      width: 46,
-                                      height: 46,
-                                      decoration: BoxDecoration(
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: const Color(0xFF10292A),
-                                          width: 1.5,
-                                        ),
-                                        color: Colors.grey[300],
-                                      ),
-                                      child: const Icon(
-                                        Icons.restaurant,
-                                        color: Colors.grey,
-                                      ),
+                                Container(
+                                  width: 53,
+                                  height: 53,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    border: Border.all(
+                                      color: const Color(0xFF10292A),
+                                      width: 1.5,
                                     ),
-                                    const SizedBox(width: 9),
-                                    Expanded(
-                                      child: Text(
-                                        nameRestaurant,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.w300,
-                                          fontFamily: 'Montserrat',
-                                          color: AppColors.textPrimary,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  address,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w300,
-                                    fontFamily: 'Montserrat',
-                                    color: AppColors.textPrimary,
+                                    color: Colors.grey[300],
+                                  ),
+                                  child: const Icon(
+                                    Icons.restaurant,
+                                    color: Colors.grey,
                                   ),
                                 ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'Номер заказа: ${order.numberOrder}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w400,
-                                    fontFamily: 'Montserrat',
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
-                                Row(
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Приготовлено',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w300,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                        Text(
-                                          _formatTime(order.cookingTime),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      '|',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Выставлено на продажу',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w300,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                        Text(
-                                          _formatTime(order.saleTime),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                    const SizedBox(width: 10),
-                                    const Text(
-                                      '|',
-                                      style: TextStyle(fontSize: 16),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        const Text(
-                                          'Забрали в',
-                                          style: TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w300,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                        Text(
-                                          _formatTime(order.bayTime),
-                                          style: const TextStyle(
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 5),
-                                Text(
-                                  'Описание: ${order.description ?? "Нет описания"}',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w300,
-                                    fontFamily: 'Montserrat',
-                                    color: AppColors.textPrimary,
-                                  ),
-                                ),
-                                const SizedBox(height: 5),
+                                const SizedBox(width: 9),
                                 Expanded(
-                                  child: Row(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Expanded(
-                                        child: Text(
-                                          'Внутри: ${order.compositionOrder ?? "Не указано"}',
-                                          style: const TextStyle(
-                                            fontSize: 16,
-                                            fontWeight: FontWeight.w300,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                      Align(
-                                        alignment: Alignment.bottomRight,
-                                        child: Text(
-                                          '${order.price.toStringAsFixed(0)} ₽',
-                                          style: const TextStyle(
-                                            fontSize: 22,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: 'Montserrat',
-                                            color: AppColors.textPrimary,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
+                                  child: Text(
+                                    nameRestaurant,
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w300,
+                                      fontFamily: 'Montserrat',
+                                      color: AppColors.textPrimary,
+                                    ),
                                   ),
                                 ),
                               ],
                             ),
-                          ),
-                        ),
-                        Container(
-                          height: 50,
-                          decoration: const BoxDecoration(
-                            color: AppColors.primary,
-                            borderRadius: BorderRadius.only(
-                              bottomLeft: Radius.circular(15),
-                              bottomRight: Radius.circular(15),
-                            ),
-                          ),
-                          child: Material(
-                            color: Colors.transparent,
-                            child: InkWell(
-                              onTap: () => Navigator.pop(context),
-                              borderRadius: const BorderRadius.only(
-                                bottomLeft: Radius.circular(15),
-                                bottomRight: Radius.circular(15),
+                            const SizedBox(height: 10),
+                            Text(
+                              address,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                                fontFamily: 'Montserrat',
+                                color: AppColors.textPrimary,
                               ),
-                              child: const Center(
-                                child: Text(
-                                  'Выдать',
-                                  style: TextStyle(
-                                    fontSize: 28,
-                                    fontWeight: FontWeight.w500,
-                                    fontFamily: 'Jura',
-                                    color: Colors.white,
-                                  ),
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Номер заказа: ${order.numberOrder}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                                fontFamily: 'Montserrat',
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Row(
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Приготовлено',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatTime(order.cookingTime),
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
                                 ),
+                                const SizedBox(width: 10),
+                                const Text('|', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Выставлено на продажу',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatTime(order.saleTime),
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 10),
+                                const Text('|', style: TextStyle(fontSize: 16)),
+                                const SizedBox(width: 10),
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    const Text(
+                                      'Забрали в',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                    Text(
+                                      _formatTime(order.bayTime),
+                                      style: const TextStyle(
+                                        fontSize: 9,
+                                        fontWeight: FontWeight.w600,
+                                        fontFamily: 'Jura',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 5),
+                            Text(
+                              'Описание: ${order.description ?? "Нет описания"}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w300,
+                                fontFamily: 'Montserrat',
+                                color: AppColors.textPrimary,
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Expanded(
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Внутри: ${order.compositionOrder ?? "Не указано"}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w300,
+                                        fontFamily: 'Montserrat',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.bottomRight,
+                                    child: Text(
+                                      '${order.price.toStringAsFixed(0)} ₽',
+                                      style: const TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: 'Montserrat',
+                                        color: AppColors.textPrimary,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    Container(
+                      height: 50,
+                      decoration: const BoxDecoration(
+                        color: AppColors.primary,
+                        borderRadius: BorderRadius.only(
+                          bottomLeft: Radius.circular(15),
+                          bottomRight: Radius.circular(15),
+                        ),
+                      ),
+                      child: Material(
+                        color: Colors.transparent,
+                        child: InkWell(
+                          onTap: () => Navigator.pop(context),
+                          borderRadius: const BorderRadius.only(
+                            bottomLeft: Radius.circular(15),
+                            bottomRight: Radius.circular(15),
+                          ),
+                          child: const Center(
+                            child: Text(
+                              'Выдать',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.w500,
+                                fontFamily: 'Jura',
+                                color: Colors.white,
                               ),
                             ),
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
+                  ],
                 ),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
       ),
     );
