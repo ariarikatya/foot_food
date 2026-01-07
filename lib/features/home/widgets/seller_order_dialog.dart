@@ -46,28 +46,31 @@ class _ActiveOrderDialogState extends State<ActiveOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-      child: Container(
-        height: 480,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFCF8F8),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x59051F20),
-              offset: const Offset(4, 8),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildImageCarousel(),
-            Expanded(child: _buildContent()),
-            _buildActionButton(),
-          ],
+    return Material(
+      type: MaterialType.transparency,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+        child: Container(
+          height: 480,
+          decoration: BoxDecoration(
+            color: const Color(0xFFFCF8F8),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x59051F20),
+                offset: const Offset(4, 8),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildImageCarousel(),
+              Expanded(child: _buildContent()),
+              _buildActionButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -263,10 +266,7 @@ class _ActiveOrderDialogState extends State<ActiveOrderDialog> {
       child: Material(
         color: Colors.transparent,
         child: InkWell(
-          onTap: () {
-            Navigator.pop(context);
-            widget.onComplete();
-          },
+          onTap: widget.onComplete,
           borderRadius: const BorderRadius.only(
             bottomLeft: Radius.circular(15),
             bottomRight: Radius.circular(15),
@@ -293,12 +293,14 @@ class HistoryOrderDialog extends StatefulWidget {
   final OrderHistoryModel order;
   final String nameRestaurant;
   final String address;
+  final VoidCallback onClose;
 
   const HistoryOrderDialog({
     super.key,
     required this.order,
     required this.nameRestaurant,
     required this.address,
+    required this.onClose,
   });
 
   @override
@@ -328,27 +330,30 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-      child: Container(
-        height: 480, // Та же высота, что и ActiveOrderDialog
-        decoration: BoxDecoration(
-          color: const Color(0xFFFCF8F8),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x59051F20),
-              offset: const Offset(4, 8),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            _buildImageCarousel(),
-            Expanded(child: _buildContent()),
-          ],
+    return Material(
+      type: MaterialType.transparency,
+      child: Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+        child: Container(
+          height: 480, // Та же высота, что и ActiveOrderDialog
+          decoration: BoxDecoration(
+            color: const Color(0xFFFCF8F8),
+            borderRadius: BorderRadius.circular(15),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x59051F20),
+                offset: const Offset(4, 8),
+                blurRadius: 12,
+              ),
+            ],
+          ),
+          child: Column(
+            children: [
+              _buildImageCarousel(),
+              Expanded(child: _buildContent()),
+            ],
+          ),
         ),
       ),
     );
@@ -386,7 +391,7 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
             top: 8,
             right: 18,
             child: GestureDetector(
-              onTap: () => Navigator.pop(context),
+              onTap: widget.onClose,
               child: const Icon(Icons.close, size: 14, color: Colors.white),
             ),
           ),

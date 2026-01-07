@@ -44,7 +44,7 @@ class SearchHeaderWidget extends StatelessWidget {
       child: SafeArea(
         bottom: false,
         child: Padding(
-          padding: const EdgeInsets.only(top: 5, bottom: 5),
+          padding: const EdgeInsets.only(top: 5, bottom: 17),
           child: showFilter
               ? (isSearching
                     ? _buildBuyerSearchMode()
@@ -188,43 +188,39 @@ class SearchHeaderWidget extends StatelessWidget {
           color: Colors.white,
           borderRadius: BorderRadius.circular(50),
         ),
-        child: TextField(
-          controller: searchController,
-          textAlignVertical: TextAlignVertical.center,
-          style: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: Colors.black,
-          ),
-          decoration: InputDecoration(
-            hintText: 'Поиск',
-            hintStyle: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: Colors.grey,
-            ),
-            border: InputBorder.none,
-            enabledBorder: InputBorder.none,
-            focusedBorder: InputBorder.none,
-            errorBorder: InputBorder.none,
-            disabledBorder: InputBorder.none,
-            isDense: true,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 24),
-            suffixIconConstraints: const BoxConstraints(
-              minHeight: 24,
-              minWidth: 48,
-            ),
-            suffixIcon: Padding(
-              padding: const EdgeInsets.only(right: 24),
-              child: SvgPicture.asset(
-                'assets/images/search.svg',
-                width: 24,
-                height: 24,
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: searchController,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: Colors.black,
+                ),
+                decoration: const InputDecoration(
+                  hintText: 'Поиск',
+                  hintStyle: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Montserrat',
+                    color: Colors.grey,
+                  ),
+                  border: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  errorBorder: InputBorder.none,
+                  disabledBorder: InputBorder.none,
+                  isDense: true,
+                  contentPadding: EdgeInsets.zero,
+                ),
               ),
             ),
-          ),
+            const SizedBox(width: 10),
+            SvgPicture.asset('assets/images/search.svg', width: 24, height: 24),
+          ],
         ),
       ),
     );

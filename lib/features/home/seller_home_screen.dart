@@ -100,36 +100,27 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       context: context,
       barrierColor: Colors.transparent,
       builder: (dialogContext) {
-        return Column(
+        return Stack(
           children: [
-            // Header остается НЕ размытым
-            SearchHeaderWidget(
-              searchController: _searchController,
-              showFilter: false,
-            ),
-            // Остальное содержимое размывается
-            Expanded(
-              child: Stack(
-                children: [
-                  // Размытие контента
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(dialogContext),
-                        child: Container(color: Colors.black.withOpacity(0.3)),
-                      ),
-                    ),
-                  ),
-                  // Карточка поверх размытия (НЕ размыта)
-                  ActiveOrderDialog(
-                    order: order,
-                    nameRestaurant: sellerInfo['nameRestaurant']!,
-                    address: sellerInfo['address']!,
-                    onComplete: () => _handleCompleteOrder(order),
-                  ),
-                ],
+            // Размытие всего кроме header и диалога
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(dialogContext),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.black.withOpacity(0.3)),
+                ),
               ),
+            ),
+            // Карточка поверх размытия (НЕ размыта)
+            ActiveOrderDialog(
+              order: order,
+              nameRestaurant: sellerInfo['nameRestaurant']!,
+              address: sellerInfo['address']!,
+              onComplete: () {
+                Navigator.pop(dialogContext);
+                _handleCompleteOrder(order);
+              },
             ),
           ],
         );
@@ -144,35 +135,24 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
       context: context,
       barrierColor: Colors.transparent,
       builder: (dialogContext) {
-        return Column(
+        return Stack(
           children: [
-            // Header остается НЕ размытым
-            SearchHeaderWidget(
-              searchController: _searchController,
-              showFilter: false,
-            ),
-            // Остальное содержимое размывается
-            Expanded(
-              child: Stack(
-                children: [
-                  // Размытие контента
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(dialogContext),
-                        child: Container(color: Colors.black.withOpacity(0.3)),
-                      ),
-                    ),
-                  ),
-                  // Карточка поверх размытия (НЕ размыта)
-                  HistoryOrderDialog(
-                    order: order,
-                    nameRestaurant: sellerInfo['nameRestaurant']!,
-                    address: sellerInfo['address']!,
-                  ),
-                ],
+            // Размытие всего кроме header и диалога
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(dialogContext),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.black.withOpacity(0.3)),
+                ),
               ),
+            ),
+            // Карточка поверх размытия (НЕ размыта)
+            HistoryOrderDialog(
+              order: order,
+              nameRestaurant: sellerInfo['nameRestaurant']!,
+              address: sellerInfo['address']!,
+              onClose: () => Navigator.pop(dialogContext),
             ),
           ],
         );

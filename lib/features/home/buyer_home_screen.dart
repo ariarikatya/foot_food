@@ -165,41 +165,27 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
       context: context,
       barrierColor: Colors.transparent,
       builder: (dialogContext) {
-        return Column(
+        return Stack(
           children: [
-            // Header остается НЕ размытым
-            SearchHeaderWidget(
-              searchController: _searchController,
-              isSearching: _isSearching,
-              onSearchToggle: _toggleSearch,
-              onFilterPressed: _toggleFilter,
-              showFilter: true,
-              isFilterOpen: _isFilterOpen,
-              title: 'Лента footbox',
-            ),
-            // Остальное содержимое размывается
-            Expanded(
-              child: Stack(
-                children: [
-                  // Размытие контента
-                  Positioned.fill(
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                      child: GestureDetector(
-                        onTap: () => Navigator.pop(dialogContext),
-                        child: Container(color: Colors.black.withOpacity(0.3)),
-                      ),
-                    ),
-                  ),
-                  // Карточка поверх размытия (НЕ размыта)
-                  ExpandedOrderDialog(
-                    order: order,
-                    nameRestaurant: sellerInfo['nameRestaurant']!,
-                    address: sellerInfo['address']!,
-                    onReserve: () => _handleReserve(order),
-                  ),
-                ],
+            // Размытие всего кроме header и диалога
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: () => Navigator.pop(dialogContext),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                  child: Container(color: Colors.black.withOpacity(0.3)),
+                ),
               ),
+            ),
+            // Диалог карточки (не размыт)
+            ExpandedOrderDialog(
+              order: order,
+              nameRestaurant: sellerInfo['nameRestaurant']!,
+              address: sellerInfo['address']!,
+              onReserve: () {
+                Navigator.pop(dialogContext);
+                _handleReserve(order);
+              },
             ),
           ],
         );
@@ -248,21 +234,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                     _isLoading
                         ? const Center(child: CircularProgressIndicator())
                         : _buildContent(),
-                    if (_isFilterOpen) ...[
-                      // Размытие только для контента (не для header и фильтров)
-                      Positioned.fill(
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                          child: GestureDetector(
-                            onTap: () => setState(() => _isFilterOpen = false),
-                            child: Container(
-                              color: Colors.black.withOpacity(0.3),
-                            ),
-                          ),
-                        ),
-                      ),
-                      _buildFilterOverlay(),
-                    ],
+                    if (_isFilterOpen) _buildFilterOverlay(),
                   ],
                 ),
               ),
