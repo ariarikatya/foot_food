@@ -6,7 +6,6 @@ import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 import 'widgets/user_type_toggle.dart';
 
-/// Чистый экран восстановления пароля
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
 
@@ -33,7 +32,6 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
 
-      // Имитация отправки запроса
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
@@ -93,6 +91,8 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         CustomButton(
                           text: 'Отправить',
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
                           onPressed: _isLoading ? null : _handleRecovery,
                           isLoading: _isLoading,
                         ),
@@ -111,26 +111,32 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: SvgPicture.asset(
+                  'assets/images/Vector.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          const Spacer(),
-          Image.asset(
-            'assets/images/logodark.png',
-            width: 223,
-            height: 128,
-            fit: BoxFit.contain,
+          const SizedBox(height: 20),
+          Center(
+            child: Image.asset(
+              'assets/images/logodark.png',
+              width: 223,
+              height: 128,
+              fit: BoxFit.contain,
+            ),
           ),
         ],
       ),

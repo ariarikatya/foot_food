@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../constants/app_colors.dart';
 import '../constants/app_spacing.dart';
-import '../constants/app_text_styles.dart';
 
 /// Кастомная кнопка приложения
 class CustomButton extends StatelessWidget {
@@ -39,7 +38,7 @@ class CustomButton extends StatelessWidget {
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x4D051F20), // 051F20 с 30% прозрачностью
+            color: const Color(0x4D051F20),
             offset: const Offset(4, 8),
             blurRadius: 12,
             spreadRadius: 0,
@@ -94,17 +93,13 @@ class CustomButton extends StatelessWidget {
       );
     }
 
-    final textStyle = (fontSize != null || fontWeight != null)
-        ? TextStyle(
-            fontSize: fontSize ?? 16,
-            fontWeight: fontWeight ?? FontWeight.w600,
-            color: isOutlined ? AppColors.primary : AppColors.textWhite,
-            fontFamily: 'Montserrat',
-            letterSpacing: 0.5,
-          )
-        : (isOutlined
-              ? AppTextStyles.button.copyWith(color: AppColors.primary)
-              : AppTextStyles.button);
+    final textStyle = TextStyle(
+      fontSize: fontSize ?? 28,
+      fontWeight: fontWeight ?? FontWeight.w500,
+      color: isOutlined ? AppColors.primary : AppColors.textWhite,
+      fontFamily: 'Jura',
+      letterSpacing: 0.5,
+    );
 
     if (icon != null) {
       return Row(

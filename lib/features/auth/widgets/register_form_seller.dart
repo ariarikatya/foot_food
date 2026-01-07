@@ -3,6 +3,44 @@ import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/custom_text_field.dart';
 
+class _OuterShadowPainter extends CustomPainter {
+  final double radius;
+
+  _OuterShadowPainter({required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    canvas.saveLayer(
+      Rect.fromLTWH(-50, -50, size.width + 100, size.height + 100),
+      Paint(),
+    );
+
+    final shadowPaint = Paint()
+      ..color = const Color(0x4D051F20)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12 / 2);
+
+    canvas.translate(4, 8);
+    canvas.drawRRect(rrect, shadowPaint);
+    canvas.translate(-4, -8);
+
+    final cutPaint = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..color = Colors.black;
+
+    canvas.drawRRect(rrect, cutPaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
 /// Форма регистрации продавца
 class RegisterFormSeller extends StatelessWidget {
   final TextEditingController emailController;
@@ -123,32 +161,45 @@ class _LogoField extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        height: 60,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: AppColors.border, width: 2),
-        ),
-        child: Row(
-          children: [
-            const Icon(Icons.attach_file, color: AppColors.primary, size: 24),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                controller.text.isEmpty ? 'Логотип' : controller.text,
-                style: const TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w400,
-                  color: Color(0xFF1A1C1B),
-                  fontFamily: 'Montserrat',
-                ),
-                overflow: TextOverflow.ellipsis,
-              ),
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: CustomPaint(
+              painter: _OuterShadowPainter(radius: AppSpacing.radiusLg),
             ),
-          ],
-        ),
+          ),
+          Container(
+            height: 60,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.3),
+              borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+              border: Border.all(color: AppColors.border, width: 2),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.attach_file,
+                  color: AppColors.primary,
+                  size: 24,
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    controller.text.isEmpty ? 'Логотип' : controller.text,
+                    style: const TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                      color: Color(0xFF1A1C1B),
+                      fontFamily: 'Montserrat',
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }

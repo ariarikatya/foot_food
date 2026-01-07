@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
@@ -46,43 +45,31 @@ class _ExpandedOrderDialogState extends State<ExpandedOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Размытый фон
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-        // Диалог
-        Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-          child: Container(
-            height: 480,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFCF8F8),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0x59051F20),
-                  offset: const Offset(4, 8),
-                  blurRadius: 12,
-                  spreadRadius: 0,
-                ),
-              ],
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+      child: Container(
+        height: 480,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8F8),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
+              spreadRadius: 0,
             ),
-            child: Column(
-              children: [
-                _buildImageCarousel(),
-                Expanded(child: _buildContent()),
-                _buildReserveButton(),
-              ],
-            ),
-          ),
+          ],
         ),
-      ],
+        child: Column(
+          children: [
+            _buildImageCarousel(),
+            Expanded(child: _buildContent()),
+            _buildReserveButton(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -157,11 +144,10 @@ class _ExpandedOrderDialogState extends State<ExpandedOrderDialog> {
 
   Widget _buildContent() {
     return Padding(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.fromLTRB(15, 5, 15, 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 5),
           _buildRestaurantInfo(),
           const SizedBox(height: 10),
           _buildAddressInfo(),

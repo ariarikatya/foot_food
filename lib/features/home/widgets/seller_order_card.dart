@@ -24,7 +24,7 @@ class SellerOrderCard extends StatelessWidget {
       onTap: onTap,
       child: Container(
         width: 147,
-        height: 150,
+        height: 180, // Одинаковая высота для Активных и Истории
         margin: const EdgeInsets.only(right: 15),
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(

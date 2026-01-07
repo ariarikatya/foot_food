@@ -1,14 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/order_model.dart';
 import '../../../data/models/order_history_model.dart';
-
-/// Базовый диалог для отображения заказа продавца
-abstract class BaseSellerOrderDialog extends StatefulWidget {
-  const BaseSellerOrderDialog({super.key});
-}
 
 /// Диалог для активного заказа продавца
 class ActiveOrderDialog extends StatefulWidget {
@@ -52,40 +46,30 @@ class _ActiveOrderDialogState extends State<ActiveOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-        Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-          child: Container(
-            height: 480,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFCF8F8),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0x59051F20),
-                  offset: const Offset(4, 8),
-                  blurRadius: 12,
-                ),
-              ],
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+      child: Container(
+        height: 480,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8F8),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
             ),
-            child: Column(
-              children: [
-                _buildImageCarousel(),
-                Expanded(child: _buildContent()),
-                _buildActionButton(),
-              ],
-            ),
-          ),
+          ],
         ),
-      ],
+        child: Column(
+          children: [
+            _buildImageCarousel(),
+            Expanded(child: _buildContent()),
+            _buildActionButton(),
+          ],
+        ),
+      ),
     );
   }
 
@@ -152,11 +136,10 @@ class _ActiveOrderDialogState extends State<ActiveOrderDialog> {
 
   Widget _buildContent() {
     return Padding(
-      padding: const EdgeInsets.all(15),
+      padding: const EdgeInsets.fromLTRB(15, 5, 15, 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 5),
           _buildRestaurantInfo(),
           const SizedBox(height: 10),
           Text(
@@ -305,7 +288,7 @@ class _ActiveOrderDialogState extends State<ActiveOrderDialog> {
   }
 }
 
-/// Диалог для истории заказа продавца
+/// Диалог для истории заказа продавца (ОДИНАКОВАЯ ВЫСОТА 480)
 class HistoryOrderDialog extends StatefulWidget {
   final OrderHistoryModel order;
   final String nameRestaurant;
@@ -345,40 +328,29 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.transparent),
-          ),
-        ),
-        Dialog(
-          backgroundColor: Colors.transparent,
-          insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-          child: Container(
-            height: 480,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFCF8F8),
-              borderRadius: BorderRadius.circular(15),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0x59051F20),
-                  offset: const Offset(4, 8),
-                  blurRadius: 12,
-                ),
-              ],
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+      child: Container(
+        height: 480, // Та же высота, что и ActiveOrderDialog
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8F8),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
             ),
-            child: Column(
-              children: [
-                _buildImageCarousel(),
-                Expanded(child: _buildContent()),
-                _buildCloseButton(),
-              ],
-            ),
-          ),
+          ],
         ),
-      ],
+        child: Column(
+          children: [
+            _buildImageCarousel(),
+            Expanded(child: _buildContent()),
+          ],
+        ),
+      ),
     );
   }
 
@@ -444,12 +416,12 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
   }
 
   Widget _buildContent() {
-    return Padding(
-      padding: const EdgeInsets.all(15),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.fromLTRB(15, 5, 15, 15),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          const SizedBox(height: 5),
           _buildRestaurantInfo(),
           const SizedBox(height: 10),
           Text(
@@ -484,35 +456,30 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
             ),
           ),
           const SizedBox(height: 5),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Внутри: ${widget.order.compositionOrder ?? "Не указано"}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w300,
-                      fontFamily: 'Montserrat',
-                      color: AppColors.textPrimary,
-                    ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Внутри: ${widget.order.compositionOrder ?? "Не указано"}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
                   ),
                 ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    '${widget.order.price.toStringAsFixed(0)} ₽',
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w400,
-                      fontFamily: 'Montserrat',
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
+              ),
+              Text(
+                '${widget.order.price.toStringAsFixed(0)} ₽',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
                 ),
-              ],
-            ),
+              ),
+            ],
           ),
         ],
       ),
@@ -549,22 +516,20 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
   }
 
   Widget _buildTimelineInfo() {
-    return Row(
+    return Wrap(
+      spacing: 10,
+      runSpacing: 5,
       children: [
         _buildTimelineItem(
           'Приготовлено',
           _formatTime(widget.order.cookingTime),
         ),
-        const SizedBox(width: 10),
         const Text('|', style: TextStyle(fontSize: 16)),
-        const SizedBox(width: 10),
         _buildTimelineItem(
           'Выставлено на продажу',
           _formatTime(widget.order.saleTime),
         ),
-        const SizedBox(width: 10),
         const Text('|', style: TextStyle(fontSize: 16)),
-        const SizedBox(width: 10),
         _buildTimelineItem('Забрали в', _formatTime(widget.order.bayTime)),
       ],
     );
@@ -593,40 +558,6 @@ class _HistoryOrderDialogState extends State<HistoryOrderDialog> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildCloseButton() {
-    return Container(
-      height: 50,
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(15),
-          bottomRight: Radius.circular(15),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () => Navigator.pop(context),
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(15),
-            bottomRight: Radius.circular(15),
-          ),
-          child: const Center(
-            child: Text(
-              'Закрыть',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Jura',
-                color: Colors.white,
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

@@ -8,7 +8,6 @@ import '../../data/services/mock_api_service.dart';
 import 'widgets/login_form.dart';
 import 'widgets/user_type_toggle.dart';
 
-/// Чистый экран авторизации
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
 
@@ -119,6 +118,8 @@ class _LoginScreenState extends State<LoginScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         CustomButton(
                           text: 'Войти',
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
                           onPressed: _isLoading ? null : _handleLogin,
                           isLoading: _isLoading,
                         ),
@@ -140,26 +141,32 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget _buildAppBar() {
     return Padding(
       padding: const EdgeInsets.all(AppSpacing.md),
-      child: Row(
+      child: Column(
         children: [
-          GestureDetector(
-            onTap: () => Navigator.of(context).pop(),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
+          Row(
+            children: [
+              GestureDetector(
+                onTap: () => Navigator.of(context).pop(),
+                child: SvgPicture.asset(
+                  'assets/images/Vector.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
-          const Spacer(),
-          Image.asset(
-            'assets/images/logodark.png',
-            width: 223,
-            height: 128,
-            fit: BoxFit.contain,
+          const SizedBox(height: 20),
+          Center(
+            child: Image.asset(
+              'assets/images/logodark.png',
+              width: 223,
+              height: 128,
+              fit: BoxFit.contain,
+            ),
           ),
         ],
       ),

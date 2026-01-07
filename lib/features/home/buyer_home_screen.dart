@@ -1,13 +1,33 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/search_header_widget.dart';
 import '../../data/models/order_model.dart';
 import '../../data/services/mock_api_service.dart';
-import 'widgets/buyer_home_header.dart';
 import 'widgets/order_card.dart';
-import 'widgets/filter_dialog.dart';
 import 'widgets/expanded_order_dialog.dart';
 
-/// Чистый главный экран покупателя
+class FilterState {
+  bool filterNearby;
+  bool filterIncreasing;
+  bool filterDecreasing;
+  Set<String> selectedCategories;
+
+  FilterState({
+    this.filterNearby = false,
+    this.filterIncreasing = false,
+    this.filterDecreasing = false,
+    Set<String>? selectedCategories,
+  }) : selectedCategories = selectedCategories ?? {};
+
+  void reset() {
+    filterNearby = false;
+    filterIncreasing = false;
+    filterDecreasing = false;
+    selectedCategories.clear();
+  }
+}
+
 class BuyerHomeScreen extends StatefulWidget {
   const BuyerHomeScreen({super.key});
 
@@ -23,7 +43,19 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   List<OrderModel> _filteredOrders = [];
   bool _isLoading = true;
   bool _isSearching = false;
+  bool _isFilterOpen = false;
   FilterState _filterState = FilterState();
+
+  final List<String> _categories = [
+    'Все заведения',
+    'Рестораны',
+    'Кондитерские',
+    'Пекарни',
+    'Бары',
+    'Магазины',
+    'Фастфуд',
+    'Кафе',
+  ];
 
   @override
   void initState() {
@@ -81,39 +113,101 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
       if (!_isSearching) {
         _searchController.clear();
       }
+      if (_isFilterOpen) {
+        _isFilterOpen = false;
+      }
     });
   }
 
-  void _showFilterDialog() {
-    showDialog(
-      context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => FilterDialog(
-        initialState: _filterState,
-        onApply: (newState) {
-          setState(() => _filterState = newState);
-          // TODO: Применить фильтры к списку заказов
-        },
-      ),
-    );
+  void _toggleFilter() {
+    setState(() {
+      _isFilterOpen = !_isFilterOpen;
+    });
+  }
+
+  void _applyFilters() {
+    setState(() {
+      _isFilterOpen = false;
+    });
+  }
+
+  void _resetFilters() {
+    setState(() {
+      _filterState.reset();
+      _isFilterOpen = false;
+    });
+  }
+
+  void _toggleCategory(String category) {
+    setState(() {
+      if (category == 'Все заведения') {
+        if (_filterState.selectedCategories.contains(category)) {
+          _filterState.selectedCategories.remove(category);
+        } else {
+          _filterState.selectedCategories.clear();
+          _filterState.selectedCategories.add(category);
+        }
+      } else {
+        _filterState.selectedCategories.remove('Все заведения');
+        if (_filterState.selectedCategories.contains(category)) {
+          _filterState.selectedCategories.remove(category);
+        } else {
+          _filterState.selectedCategories.add(category);
+        }
+      }
+    });
   }
 
   void _showExpandedOrder(OrderModel order) {
     final sellerInfo = _getSellerInfo(order.idSeller);
+
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => ExpandedOrderDialog(
-        order: order,
-        nameRestaurant: sellerInfo['nameRestaurant']!,
-        address: sellerInfo['address']!,
-        onReserve: () => _handleReserve(order),
-      ),
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) {
+        return Column(
+          children: [
+            // Header остается НЕ размытым
+            SearchHeaderWidget(
+              searchController: _searchController,
+              isSearching: _isSearching,
+              onSearchToggle: _toggleSearch,
+              onFilterPressed: _toggleFilter,
+              showFilter: true,
+              isFilterOpen: _isFilterOpen,
+              title: 'Лента footbox',
+            ),
+            // Остальное содержимое размывается
+            Expanded(
+              child: Stack(
+                children: [
+                  // Размытие контента
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(dialogContext),
+                        child: Container(color: Colors.black.withOpacity(0.3)),
+                      ),
+                    ),
+                  ),
+                  // Карточка поверх размытия (НЕ размыта)
+                  ExpandedOrderDialog(
+                    order: order,
+                    nameRestaurant: sellerInfo['nameRestaurant']!,
+                    address: sellerInfo['address']!,
+                    onReserve: () => _handleReserve(order),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _handleReserve(OrderModel order) {
-    // TODO: Реализовать логику бронирования
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Заказ #${order.numberOrder} забронирован'),
@@ -125,30 +219,285 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/buyerHome.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/buyerHome.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
+          ),
+          Column(
+            children: [
+              SearchHeaderWidget(
+                searchController: _searchController,
+                isSearching: _isSearching,
+                onSearchToggle: _toggleSearch,
+                onFilterPressed: _toggleFilter,
+                showFilter: true,
+                isFilterOpen: _isFilterOpen,
+                title: 'Лента footbox',
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    _isLoading
+                        ? const Center(child: CircularProgressIndicator())
+                        : _buildContent(),
+                    if (_isFilterOpen) ...[
+                      // Размытие только для контента (не для header и фильтров)
+                      Positioned.fill(
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                          child: GestureDetector(
+                            onTap: () => setState(() => _isFilterOpen = false),
+                            child: Container(
+                              color: Colors.black.withOpacity(0.3),
+                            ),
+                          ),
+                        ),
+                      ),
+                      _buildFilterOverlay(),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFilterOverlay() {
+    final categoriesLeft = [
+      'Все заведения',
+      'Рестораны',
+      'Кондитерские',
+      'Пекарни',
+    ];
+    final categoriesRight = ['Бары', 'Магазины', 'Фастфуд', 'Кафе'];
+
+    return Stack(
+      children: [
+        Positioned(
+          left: 0,
+          right: 0,
+          top: 0,
+          child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(20),
+            decoration: const BoxDecoration(
+              color: AppColors.primary,
+              borderRadius: BorderRadius.only(
+                bottomLeft: Radius.circular(5),
+                bottomRight: Radius.circular(5),
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    Row(
+                      children: [
+                        const Text(
+                          'Рядом',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w400,
+                            fontFamily: 'Montserrat',
+                            color: Color(0xFF7FA29A),
+                          ),
+                        ),
+                        Switch(
+                          value: _filterState.filterNearby,
+                          onChanged: (value) {
+                            setState(() => _filterState.filterNearby = value);
+                          },
+                          activeColor: const Color(0xFF7FA29A),
+                        ),
+                      ],
+                    ),
+                    const Spacer(),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        _buildRadioOption(
+                          'По возрастающей',
+                          _filterState.filterIncreasing,
+                          () {
+                            setState(() {
+                              _filterState.filterIncreasing = true;
+                              _filterState.filterDecreasing = false;
+                            });
+                          },
+                        ),
+                        const SizedBox(height: 8),
+                        _buildRadioOption(
+                          'По убывающей',
+                          _filterState.filterDecreasing,
+                          () {
+                            setState(() {
+                              _filterState.filterDecreasing = true;
+                              _filterState.filterIncreasing = false;
+                            });
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: categoriesLeft
+                            .map(
+                              (category) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _buildCategoryOption(category),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                    const SizedBox(width: 20),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: categoriesRight
+                            .map(
+                              (category) => Padding(
+                                padding: const EdgeInsets.only(bottom: 8),
+                                child: _buildCategoryOption(category),
+                              ),
+                            )
+                            .toList(),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 15),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _applyFilters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: AppColors.primary,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Применить',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _resetFilters,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white,
+                          foregroundColor: const Color(0xFFD32F2F),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(5),
+                          ),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                        child: const Text(
+                          'Сбросить',
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            fontFamily: 'Montserrat',
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        child: Column(
-          children: [
-            BuyerHomeHeader(
-              searchController: _searchController,
-              isSearching: _isSearching,
-              onSearchToggle: _toggleSearch,
-              onFilterPressed: _showFilterDialog,
+      ],
+    );
+  }
+
+  Widget _buildRadioOption(String title, bool selected, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: selected ? const Color(0xFF7FA29A) : Colors.transparent,
             ),
-            Expanded(
-              child: _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : _buildContent(),
+          ),
+          const SizedBox(width: 5),
+          Flexible(
+            child: Text(
+              title,
+              style: const TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: Color(0xFF7FA29A),
+              ),
             ),
-          ],
-        ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCategoryOption(String category) {
+    final isSelected = _filterState.selectedCategories.contains(category);
+    return GestureDetector(
+      onTap: () => _toggleCategory(category),
+      child: Row(
+        children: [
+          Container(
+            width: 8,
+            height: 8,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isSelected ? const Color(0xFF7FA29A) : Colors.transparent,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            category,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Montserrat',
+              color: Color(0xFF7FA29A),
+            ),
+          ),
+        ],
       ),
     );
   }

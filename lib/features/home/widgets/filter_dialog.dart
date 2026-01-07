@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 
@@ -77,38 +76,35 @@ class _FilterDialogState extends State<FilterDialog> {
 
   @override
   Widget build(BuildContext context) {
-    return BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-      child: Dialog(
-        backgroundColor: Colors.transparent,
-        alignment: Alignment.topCenter,
-        insetPadding: EdgeInsets.only(
-          top: MediaQuery.of(context).padding.top + 60,
-          left: 26,
-          right: 26,
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      alignment: Alignment.topCenter,
+      insetPadding: EdgeInsets.only(
+        top: MediaQuery.of(context).padding.top + 77,
+        left: 26,
+        right: 26,
+      ),
+      child: Container(
+        constraints: const BoxConstraints(maxHeight: 500),
+        decoration: BoxDecoration(
+          color: AppColors.primary,
+          borderRadius: BorderRadius.circular(30),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
+            ),
+          ],
         ),
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 500),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFCF8F8),
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0x59051F20),
-                offset: const Offset(4, 8),
-                blurRadius: 12,
-              ),
-            ],
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _buildHeader(),
-              const Divider(height: 1, color: Color(0xFF00221D)),
-              _buildContent(),
-              _buildButtons(),
-            ],
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            _buildHeader(),
+            const Divider(height: 1, color: Color(0xFF7FA29A)),
+            _buildContent(),
+            _buildButtons(),
+          ],
         ),
       ),
     );
@@ -123,7 +119,7 @@ class _FilterDialogState extends State<FilterDialog> {
           fontSize: 22,
           fontWeight: FontWeight.w400,
           fontFamily: 'Montserrat',
-          color: AppColors.textPrimary,
+          color: Color(0xFF7FA29A),
         ),
       ),
     );
@@ -160,7 +156,7 @@ class _FilterDialogState extends State<FilterDialog> {
               },
             ),
             const SizedBox(height: 20),
-            const Divider(height: 1, color: Color(0xFF00221D)),
+            const Divider(height: 1, color: Color(0xFF7FA29A)),
             const SizedBox(height: 20),
             ..._categories.map(
               (category) => Padding(
@@ -198,8 +194,8 @@ class _FilterDialogState extends State<FilterDialog> {
                 Navigator.pop(context);
               },
               style: ElevatedButton.styleFrom(
-                backgroundColor: AppColors.primary,
-                foregroundColor: Colors.white,
+                backgroundColor: const Color(0xFF7FA29A),
+                foregroundColor: AppColors.primary,
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -224,8 +220,9 @@ class _FilterDialogState extends State<FilterDialog> {
                 Navigator.pop(context);
               },
               style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.primary,
-                side: const BorderSide(color: AppColors.border, width: 2),
+                backgroundColor: Colors.transparent,
+                foregroundColor: const Color(0xFF7FA29A),
+                side: const BorderSide(color: Color(0xFF7FA29A), width: 2),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -262,10 +259,19 @@ class _FilterCheckbox extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Checkbox(
-          value: value,
-          onChanged: onChanged,
-          activeColor: AppColors.primary,
+        Theme(
+          data: ThemeData(
+            checkboxTheme: CheckboxThemeData(
+              fillColor: WidgetStateProperty.resolveWith<Color>((states) {
+                if (states.contains(WidgetState.selected)) {
+                  return const Color(0xFF7FA29A);
+                }
+                return Colors.transparent;
+              }),
+              side: const BorderSide(color: Color(0xFF7FA29A), width: 2),
+            ),
+          ),
+          child: Checkbox(value: value, onChanged: onChanged),
         ),
         Text(
           title,
@@ -273,7 +279,7 @@ class _FilterCheckbox extends StatelessWidget {
             fontSize: 16,
             fontWeight: FontWeight.w300,
             fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
+            color: Color(0xFF7FA29A),
           ),
         ),
       ],

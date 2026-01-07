@@ -29,12 +29,7 @@ class SellerHomeHeader extends StatelessWidget {
       ),
       child: SafeArea(
         child: Padding(
-          padding: const EdgeInsets.only(
-            left: 26,
-            right: 26,
-            top: 10,
-            bottom: 20,
-          ),
+          padding: const EdgeInsets.fromLTRB(26, 10, 26, 17),
           child: Container(
             height: 50,
             decoration: BoxDecoration(
@@ -64,13 +59,13 @@ class SellerHomeHeader extends StatelessWidget {
                 errorBorder: InputBorder.none,
                 disabledBorder: InputBorder.none,
                 isDense: true,
-                contentPadding: const EdgeInsets.only(left: 24, right: 24),
+                contentPadding: const EdgeInsets.symmetric(horizontal: 24),
                 suffixIconConstraints: const BoxConstraints(
                   minHeight: 24,
                   minWidth: 48,
                 ),
                 suffixIcon: Padding(
-                  padding: const EdgeInsets.only(right: 24, left: 10),
+                  padding: const EdgeInsets.only(right: 24),
                   child: SvgPicture.asset(
                     'assets/images/search.svg',
                     width: 24,

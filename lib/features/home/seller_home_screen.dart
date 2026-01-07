@@ -1,15 +1,15 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../core/constants/app_colors.dart';
+import '../../core/widgets/search_header_widget.dart';
 import '../../data/models/order_model.dart';
 import '../../data/models/order_history_model.dart';
 import '../../data/services/mock_api_service.dart';
-import 'widgets/seller_home_header.dart';
 import 'widgets/seller_order_card.dart';
 import 'widgets/seller_order_dialog.dart';
 import 'widgets/order_section.dart';
 
-/// Чистый главный экран продавца
 class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
 
@@ -95,33 +95,92 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
 
   void _showActiveOrderDialog(OrderModel order) {
     final sellerInfo = _getSellerInfo(order.idSeller);
+
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => ActiveOrderDialog(
-        order: order,
-        nameRestaurant: sellerInfo['nameRestaurant']!,
-        address: sellerInfo['address']!,
-        onComplete: () => _handleCompleteOrder(order),
-      ),
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) {
+        return Column(
+          children: [
+            // Header остается НЕ размытым
+            SearchHeaderWidget(
+              searchController: _searchController,
+              showFilter: false,
+            ),
+            // Остальное содержимое размывается
+            Expanded(
+              child: Stack(
+                children: [
+                  // Размытие контента
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(dialogContext),
+                        child: Container(color: Colors.black.withOpacity(0.3)),
+                      ),
+                    ),
+                  ),
+                  // Карточка поверх размытия (НЕ размыта)
+                  ActiveOrderDialog(
+                    order: order,
+                    nameRestaurant: sellerInfo['nameRestaurant']!,
+                    address: sellerInfo['address']!,
+                    onComplete: () => _handleCompleteOrder(order),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _showHistoryOrderDialog(OrderHistoryModel order) {
     final sellerInfo = _getSellerInfo(order.idSeller);
+
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.5),
-      builder: (context) => HistoryOrderDialog(
-        order: order,
-        nameRestaurant: sellerInfo['nameRestaurant']!,
-        address: sellerInfo['address']!,
-      ),
+      barrierColor: Colors.transparent,
+      builder: (dialogContext) {
+        return Column(
+          children: [
+            // Header остается НЕ размытым
+            SearchHeaderWidget(
+              searchController: _searchController,
+              showFilter: false,
+            ),
+            // Остальное содержимое размывается
+            Expanded(
+              child: Stack(
+                children: [
+                  // Размытие контента
+                  Positioned.fill(
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(dialogContext),
+                        child: Container(color: Colors.black.withOpacity(0.3)),
+                      ),
+                    ),
+                  ),
+                  // Карточка поверх размытия (НЕ размыта)
+                  HistoryOrderDialog(
+                    order: order,
+                    nameRestaurant: sellerInfo['nameRestaurant']!,
+                    address: sellerInfo['address']!,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   void _handleCompleteOrder(OrderModel order) {
-    // TODO: Реализовать логику выдачи заказа
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text('Заказ #${order.numberOrder} выдан'),
@@ -144,7 +203,10 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
         ),
         child: Column(
           children: [
-            SellerHomeHeader(searchController: _searchController),
+            SearchHeaderWidget(
+              searchController: _searchController,
+              showFilter: false,
+            ),
             Expanded(
               child: _isLoading
                   ? const Center(child: CircularProgressIndicator())
