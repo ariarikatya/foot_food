@@ -29,10 +29,13 @@ class SearchHeaderWidget extends StatelessWidget {
       width: double.infinity,
       decoration: BoxDecoration(
         color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
+        // Убираем скругление когда фильтр открыт
+        borderRadius: isFilterOpen
+            ? BorderRadius.zero
+            : const BorderRadius.only(
+                bottomLeft: Radius.circular(10),
+                bottomRight: Radius.circular(10),
+              ),
         boxShadow: [
           BoxShadow(
             color: const Color(0x59000000),
@@ -76,6 +79,7 @@ class SearchHeaderWidget extends StatelessWidget {
               fontWeight: FontWeight.w400,
               fontFamily: 'Montserrat',
               color: Color(0xFF7FA29A),
+              decoration: TextDecoration.none, // Убираем подчеркивание
             ),
           ),
           const Spacer(),

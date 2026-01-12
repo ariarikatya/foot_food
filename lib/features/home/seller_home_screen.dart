@@ -99,20 +99,43 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
+      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
       builder: (dialogContext) {
         return Stack(
+          fit: StackFit.expand, // Растягиваем на весь экран
           children: [
-            // Размытие всего кроме header и диалога
-            Positioned.fill(
+            // Размытие ВСЕГО экрана без SafeArea
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
                 onTap: () => Navigator.pop(dialogContext),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.black.withOpacity(0.3)),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+            // Header поверх размытия (не размыт) - кликабельный
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  // Закрываем карточку при клике на header/поиск
+                  Navigator.pop(dialogContext);
+                },
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: AbsorbPointer(
+                    // Блокируем TextField от получения фокуса
+                    child: SearchHeaderWidget(
+                      searchController: _searchController,
+                      showFilter: false,
+                    ),
+                  ),
                 ),
               ),
             ),
-            // Карточка поверх размытия (НЕ размыта)
+            // Диалог карточки (не размыт)
             ActiveOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
@@ -134,20 +157,43 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
+      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
       builder: (dialogContext) {
         return Stack(
+          fit: StackFit.expand, // Растягиваем на весь экран
           children: [
-            // Размытие всего кроме header и диалога
-            Positioned.fill(
+            // Размытие ВСЕГО экрана без SafeArea
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
                 onTap: () => Navigator.pop(dialogContext),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.black.withOpacity(0.3)),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+            // Header поверх размытия (не размыт) - кликабельный
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: GestureDetector(
+                behavior: HitTestBehavior.opaque,
+                onTap: () {
+                  // Закрываем карточку при клике на header/поиск
+                  Navigator.pop(dialogContext);
+                },
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: AbsorbPointer(
+                    // Блокируем TextField от получения фокуса
+                    child: SearchHeaderWidget(
+                      searchController: _searchController,
+                      showFilter: false,
+                    ),
+                  ),
                 ),
               ),
             ),
-            // Карточка поверх размытия (НЕ размыта)
+            // Диалог карточки (не размыт)
             HistoryOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,

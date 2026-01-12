@@ -164,16 +164,40 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
+      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
       builder: (dialogContext) {
         return Stack(
+          fit: StackFit.expand, // Растягиваем на весь экран
           children: [
-            // Размытие всего кроме header и диалога
-            Positioned.fill(
+            // Размытие ВСЕГО экрана без SafeArea
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
                 onTap: () => Navigator.pop(dialogContext),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-                  child: Container(color: Colors.black.withOpacity(0.3)),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+            // Header поверх размытия (не размыт)
+            Positioned(
+              top: 0,
+              left: 0,
+              right: 0,
+              child: Material(
+                type: MaterialType.transparency,
+                child: SearchHeaderWidget(
+                  searchController: _searchController,
+                  isSearching: _isSearching,
+                  onSearchToggle: () {
+                    Navigator.pop(dialogContext);
+                    _toggleSearch();
+                  },
+                  onFilterPressed: () {
+                    Navigator.pop(dialogContext);
+                    _toggleFilter();
+                  },
+                  showFilter: true,
+                  isFilterOpen: false,
+                  title: 'Лента footbox',
                 ),
               ),
             ),
@@ -219,14 +243,25 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
           ),
           Column(
             children: [
-              SearchHeaderWidget(
-                searchController: _searchController,
-                isSearching: _isSearching,
-                onSearchToggle: _toggleSearch,
-                onFilterPressed: _toggleFilter,
-                showFilter: true,
-                isFilterOpen: _isFilterOpen,
-                title: 'Лента footbox',
+              // Header с динамическим скруглением
+              Container(
+                decoration: BoxDecoration(
+                  borderRadius: _isFilterOpen
+                      ? BorderRadius.zero
+                      : const BorderRadius.only(
+                          bottomLeft: Radius.circular(10),
+                          bottomRight: Radius.circular(10),
+                        ),
+                ),
+                child: SearchHeaderWidget(
+                  searchController: _searchController,
+                  isSearching: _isSearching,
+                  onSearchToggle: _toggleSearch,
+                  onFilterPressed: _toggleFilter,
+                  showFilter: true,
+                  isFilterOpen: _isFilterOpen,
+                  title: 'Лента footbox',
+                ),
               ),
               Expanded(
                 child: Stack(
