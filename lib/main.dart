@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'core/constants/app_colors.dart';
 import 'features/splash/splash_screen.dart';
 import 'features/onboarding/onboarding_screen.dart';
@@ -8,8 +7,8 @@ import 'features/auth/auth_screen.dart';
 import 'features/auth/register_screen.dart';
 import 'features/auth/login_screen.dart';
 import 'features/auth/password_recovery_screen.dart';
-import 'features/home/buyer_home_screen.dart';
-import 'features/home/seller_home_screen.dart';
+import 'features/home/buyer_home_with_navigation.dart';
+import 'features/home/seller_home_with_navigation.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -111,8 +110,8 @@ class FootFoodApp extends StatelessWidget {
         '/register': (context) => const RegisterScreen(),
         '/login': (context) => const LoginScreen(),
         '/password_recovery': (context) => const PasswordRecoveryScreen(),
-        '/buyer_home': (context) => const BuyerHomeScreen(),
-        '/seller_home': (context) => const SellerHomeScreen(),
+        '/buyer_home': (context) => const BuyerHomeWithNavigation(),
+        '/seller_home': (context) => const SellerHomeWithNavigation(),
       },
     );
   }
