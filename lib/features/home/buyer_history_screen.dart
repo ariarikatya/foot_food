@@ -134,20 +134,11 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
                 ),
               ),
             ),
-            ExpandedOrderDialog(
+            // Диалог без кнопки "Забронировать"
+            _HistoryOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
               address: sellerInfo['address']!,
-              onReserve: () {
-                Navigator.pop(dialogContext);
-                // История - нельзя забронировать снова
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Это заказ из истории'),
-                    backgroundColor: AppColors.info,
-                  ),
-                );
-              },
             ),
           ],
         );
@@ -165,7 +156,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
             height: double.infinity,
             decoration: const BoxDecoration(
               image: DecorationImage(
-                image: AssetImage('assets/images/buyerHome.png'),
+                image: AssetImage('assets/images/bucal.png'),
                 fit: BoxFit.cover,
               ),
             ),
@@ -234,6 +225,260 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
           onTap: () => _showOrderDetails(historyOrder),
         );
       },
+    );
+  }
+}
+
+/// Диалог для заказа из истории (БЕЗ кнопки "Забронировать")
+class _HistoryOrderDialog extends StatefulWidget {
+  final OrderModel order;
+  final String nameRestaurant;
+  final String address;
+
+  const _HistoryOrderDialog({
+    required this.order,
+    required this.nameRestaurant,
+    required this.address,
+  });
+
+  @override
+  State<_HistoryOrderDialog> createState() => _HistoryOrderDialogState();
+}
+
+class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
+  late PageController _pageController;
+  int _currentImageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController();
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
+    // Используем встроенное форматирование без DateFormat
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+      child: Container(
+        height: 480,
+        decoration: BoxDecoration(
+          color: const Color(0xFFFCF8F8),
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
+              spreadRadius: 0,
+            ),
+          ],
+        ),
+        child: Column(
+          children: [
+            _buildImageCarousel(),
+            Expanded(child: _buildContent()),
+            // Без кнопки "Забронировать"
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImageCarousel() {
+    return SizedBox(
+      height: 100,
+      child: Stack(
+        children: [
+          PageView.builder(
+            controller: _pageController,
+            itemCount: 3,
+            onPageChanged: (index) {
+              setState(() => _currentImageIndex = index);
+            },
+            itemBuilder: (context, index) {
+              return ClipRRect(
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
+                child: Container(
+                  color: Colors.grey[300],
+                  child: const Icon(
+                    Icons.fastfood,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
+              );
+            },
+          ),
+          Positioned(
+            top: 8,
+            right: 18,
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                width: 14,
+                height: 14,
+                decoration: BoxDecoration(
+                  color: Colors.transparent,
+                  borderRadius: BorderRadius.circular(2),
+                ),
+                child: const Icon(Icons.close, size: 14, color: Colors.white),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 7,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                3,
+                (index) => Container(
+                  width: _currentImageIndex == index ? 10 : 5,
+                  height: 5,
+                  margin: const EdgeInsets.symmetric(horizontal: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFD9D9D9),
+                    borderRadius: BorderRadius.circular(2.5),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildContent() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(15, 5, 15, 15),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildRestaurantInfo(),
+          const SizedBox(height: 10),
+          Text(
+            widget.address,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            'Номер заказа: ${widget.order.numberOrder}',
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 5),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                'Изготовлено: ${_formatTime(widget.order.cookingTime)}',
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Jura',
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                'Заказ выполнен',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Jura',
+                  color: AppColors.success,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 5),
+          Expanded(
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: Text(
+                    'Описание: ${widget.order.description ?? "Нет описания"}',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.w300,
+                      fontFamily: 'Montserrat',
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+                Align(
+                  alignment: Alignment.bottomRight,
+                  child: Text(
+                    '${widget.order.price.toStringAsFixed(0)} ₽',
+                    style: const TextStyle(
+                      fontSize: 28,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Montserrat',
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRestaurantInfo() {
+    return Row(
+      children: [
+        Container(
+          width: 53,
+          height: 53,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            border: Border.all(color: const Color(0xFF10292A), width: 1.5),
+            color: Colors.grey[300],
+          ),
+          child: const Icon(Icons.restaurant, color: Colors.grey),
+        ),
+        const SizedBox(width: 9),
+        Expanded(
+          child: Text(
+            widget.nameRestaurant,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

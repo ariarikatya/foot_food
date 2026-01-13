@@ -34,10 +34,10 @@ class BuyerBottomNavigation extends StatelessWidget {
           ),
 
           // Иконки
-          _buildIcon(width * 0.2, 0, 'assets/images/icon people.svg'),
-          _buildIcon(width * 0.4, 1, 'assets/images/icon coin.svg'),
-          _buildIcon(width * 0.6, 2, 'assets/images/icon people.svg'),
-          _buildIcon(width * 0.8, 3, 'assets/images/icon coin.svg'),
+          _buildIcon(width * 0.2, 0, 'assets/images/home.svg'),
+          _buildIcon(width * 0.4, 1, 'assets/images/map.svg'),
+          _buildIcon(width * 0.6, 2, 'assets/images/calend.svg'),
+          _buildIcon(width * 0.8, 3, 'assets/images/setting.svg'),
         ],
       ),
     );

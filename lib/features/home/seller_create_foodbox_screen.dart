@@ -97,7 +97,7 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/sellerHome.png'),
+            image: AssetImage('assets/images/selladd.png'),
             fit: BoxFit.cover,
           ),
         ),

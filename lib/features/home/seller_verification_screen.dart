@@ -58,7 +58,7 @@ class _SellerVerificationScreenState extends State<SellerVerificationScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/sellerHome.png'),
+            image: AssetImage('assets/images/selver.png'),
             fit: BoxFit.cover,
           ),
         ),

@@ -57,7 +57,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   void _navigateToAuth() {
-    Navigator.of(context).pushReplacementNamed('/auth');
+    // Проверяем, был ли push или это первый запуск
+    if (Navigator.canPop(context)) {
+      // Если можем вернуться назад (вызван через push из settings), просто закрываемся
+      Navigator.pop(context);
+    } else {
+      // Если это первый запуск (нет предыдущего экрана), идем на auth
+      Navigator.of(context).pushReplacementNamed('/auth');
+    }
   }
 
   @override
@@ -144,7 +151,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Subtitle - Montserrat Medium 28
                       Text(
                         pageData['subtitle']!,
                         style: const TextStyle(
@@ -156,7 +162,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 15),
-                      // Title - Montserrat Light 20
                       Text(
                         pageData['title']!,
                         style: const TextStyle(
@@ -167,7 +172,6 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                         ),
                         textAlign: TextAlign.center,
                       ),
-                      // Расстояние 55 до нижней навигации
                       const SizedBox(height: 0),
                     ],
                   ),

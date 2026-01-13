@@ -74,7 +74,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/sellerHome.png'),
+            image: AssetImage('assets/images/sellset.png'),
             fit: BoxFit.cover,
           ),
         ),

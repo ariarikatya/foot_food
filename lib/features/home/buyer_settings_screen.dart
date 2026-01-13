@@ -36,7 +36,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
         height: double.infinity,
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/images/buyerHome.png'),
+            image: AssetImage('assets/images/buset.png'),
             fit: BoxFit.cover,
           ),
         ),
@@ -136,31 +136,54 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   }
 
   Widget _buildTitle() {
-    return const Text(
-      'Foot Food',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Jura',
-        color: AppColors.textPrimary,
-      ),
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Image.asset(
+          'assets/images/logodark.png',
+          width: 71,
+          height: 41,
+          fit: BoxFit.contain,
+        ),
+        const SizedBox(width: 15),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                _phoneController.text,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Город: ${_cityController.text}',
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildPhoneField() {
-    return CustomTextField(
-      controller: _phoneController,
-      hintText: 'Номер телефона',
-      enabled: false,
-    );
+    // Удалено - информация теперь в _buildTitle
+    return const SizedBox.shrink();
   }
 
   Widget _buildCityField() {
-    return CustomTextField(
-      controller: _cityController,
-      hintText: 'Город',
-      enabled: false,
-    );
+    // Удалено - информация теперь в _buildTitle
+    return const SizedBox.shrink();
   }
 
   Widget _buildChangeDataButton() {
@@ -194,12 +217,12 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
       fontSize: 22,
       fontWeight: FontWeight.w400,
       onPressed: () async {
-        // Показываем onboarding и возвращаемся обратно
+        // Показываем onboarding, но не заменяем текущий маршрут
         await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
-        // После завершения onboarding возвращаемся на settings
+        // После закрытия onboarding остаемся на settings
       },
     );
   }

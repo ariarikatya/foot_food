@@ -34,9 +34,9 @@ class SellerBottomNavigation extends StatelessWidget {
           ),
 
           // Иконки
-          _buildIcon(width * 0.25, 0, 'assets/images/icon people.svg'),
-          _buildIcon(width * 0.5, 1, 'assets/images/icon coin.svg'),
-          _buildIcon(width * 0.75, 2, 'assets/images/icon people.svg'),
+          _buildIcon(width * 0.25, 0, 'assets/images/calend.svg'),
+          _buildIcon(width * 0.5, 1, 'assets/images/plus.svg'),
+          _buildIcon(width * 0.75, 2, 'assets/images/setting.svg'),
         ],
       ),
     );
