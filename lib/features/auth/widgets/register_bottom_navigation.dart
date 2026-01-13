@@ -17,8 +17,17 @@ class RegisterBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.of(context).size.width;
-    // Высота панели
     const double barHeight = 113.0;
+
+    final double lX = width * 0.25;
+    final double rX = width * 0.75;
+
+    // Расчеты центров кнопок (Y=0 - верхняя линия панели)
+    // Невыбранная: Прямоугольник внутри (0 до 54). Круг на 5px выше низа (54-5=49). Центр 49-42.5 = 6.5
+    const double unselectedIconBottom = barHeight - 6.5 - 42.5;
+
+    // Выбранная: Прямоугольник сверху (-50 до 0). Круг на 14px ниже верха (-50+14=-36). Центр -36+46 = 10
+    const double selectedIconBottom = barHeight - 10 - 42.5;
 
     return SizedBox(
       height: 180,
@@ -26,42 +35,40 @@ class RegisterBottomNavigation extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
-          // 1. ФОН (Rpainter)
           Positioned(
             bottom: 0,
             child: CustomPaint(
               size: Size(width, barHeight),
-              painter: _FigmaStrictMirrorPainter(isLeft: isBuyer),
+              painter: _FigmaFinalPainter(isLeft: isBuyer),
             ),
           ),
-
-          // 2. ИКОНКИ
-          _buildStaticIcon(
-            width * 0.25,
+          _buildIcon(
+            lX,
             isBuyer,
             'assets/images/icon people.svg',
+            isBuyer ? selectedIconBottom : unselectedIconBottom,
             onBuyerTap,
           ),
-          _buildStaticIcon(
-            width * 0.75,
+          _buildIcon(
+            rX,
             !isBuyer,
             'assets/images/icon coin.svg',
+            !isBuyer ? selectedIconBottom : unselectedIconBottom,
             onSellerTap,
           ),
 
-          // 3. ТЕКСТ
           Positioned(
             bottom: 20,
             left: 45,
             right: 45,
-            child: Text(
+            child: const Text(
               'Нажимая кнопку “Зарегистрироваться”, вы соглашаетесь с политикой конфиденциальности...',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Jura',
                 fontSize: 8,
                 fontWeight: FontWeight.w700,
-                color: const Color(0xFF7FA29A),
+                color: Color(0xFF7FA29A),
               ),
             ),
           ),
@@ -70,17 +77,16 @@ class RegisterBottomNavigation extends StatelessWidget {
     );
   }
 
-  Widget _buildStaticIcon(
+  Widget _buildIcon(
     double x,
     bool isSelected,
     String asset,
+    double bottom,
     VoidCallback tap,
   ) {
-    // Кнопка 85x85. Радиус 42.5.
-    // Центр кнопки должен совпадать с геометрией выреза.
     return Positioned(
       left: x - 42.5,
-      bottom: 70,
+      bottom: bottom,
       child: GestureDetector(
         onTap: tap,
         child: Container(
@@ -88,15 +94,7 @@ class RegisterBottomNavigation extends StatelessWidget {
           height: 85,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            // Если выбрано - рисуем зеленый круг.
-            // Если нет - круг прозрачный, иконка висит над "горкой".
-            gradient: isSelected
-                ? const LinearGradient(
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                    colors: [Color(0xFF235347), Color(0xFF163832)],
-                  )
-                : null,
+            color: isSelected ? const Color(0xFF163832) : Colors.transparent,
           ),
           child: Center(
             child: SvgPicture.asset(
@@ -114,9 +112,9 @@ class RegisterBottomNavigation extends StatelessWidget {
   }
 }
 
-class _FigmaStrictMirrorPainter extends CustomPainter {
+class _FigmaFinalPainter extends CustomPainter {
   final bool isLeft;
-  _FigmaStrictMirrorPainter({required this.isLeft});
+  _FigmaFinalPainter({required this.isLeft});
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -128,83 +126,116 @@ class _FigmaStrictMirrorPainter extends CustomPainter {
       )
       ..style = PaintingStyle.fill;
 
-    final path = Path();
     final double lX = size.width * 0.25;
     final double rX = size.width * 0.75;
 
-    // Начинаем рисовать
-    path.moveTo(0, 0);
+    Path mainPanel = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Левая часть
-    // isLeft = true -> Выбрана (Hole/Выемка), direction = 1
-    // isLeft = false -> Не выбрана (Hill/Горка), direction = -1
-    _drawMirrorShape(path, lX, isLeft ? 1 : -1);
+    // 1. Невыбранная (Hill) - Прямоугольник ВНУТРИ панели (от 0 до 54)
+    Path hill = _createFigmaShape(
+      radius: 5.0,
+      w: 123,
+      h: 54,
+      d: 85,
+      offset: 5.0,
+      isHill: true,
+    );
 
-    // Правая часть
-    // Наоборот
-    _drawMirrorShape(path, rX, !isLeft ? 1 : -1);
+    // 2. Выбранная (Hole) - Прямоугольник НАД панелью (от -50 до 0)
+    Path hole = _createFigmaShape(
+      radius: 10.0,
+      w: 140,
+      h: 50,
+      d: 92,
+      offset: 14.0,
+      isHill: false,
+    );
 
-    // Замыкаем контур панели
-    path.lineTo(size.width, 0);
-    path.lineTo(size.width, size.height);
-    path.lineTo(0, size.height);
-    path.close();
+    Path finalPath = mainPanel;
+    if (isLeft) {
+      finalPath = Path.combine(
+        PathOperation.difference,
+        finalPath,
+        hole.shift(Offset(lX, 0)),
+      );
+      finalPath = Path.combine(
+        PathOperation.union,
+        finalPath,
+        hill.shift(Offset(rX, 0)),
+      );
+    } else {
+      finalPath = Path.combine(
+        PathOperation.union,
+        finalPath,
+        hill.shift(Offset(lX, 0)),
+      );
+      finalPath = Path.combine(
+        PathOperation.difference,
+        finalPath,
+        hole.shift(Offset(rX, 0)),
+      );
+    }
 
-    // Тень и отрисовка
-    canvas.drawShadow(path.shift(const Offset(0, -1)), Colors.black, 10, false);
-    canvas.drawPath(path, paint);
+    canvas.drawShadow(
+      finalPath.shift(const Offset(0, -1)),
+      Colors.black,
+      10,
+      false,
+    );
+    canvas.drawPath(finalPath, paint);
   }
 
-  /// ЕДИНАЯ ФУНКЦИЯ ДЛЯ ГОРКИ И ЯМЫ
-  /// [center] - координата X центра кнопки
-  /// [dir] - 1.0 для Ямы (вниз), -1.0 для Горки (вверх)
-  void _drawMirrorShape(Path path, double center, double dir) {
-    // --- НАСТРОЙКИ ГЕОМЕТРИИ ---
-    // Радиус кнопки 42.5.
-    // Вы просили "уже на 1". Значит зазор = 1.0.
-    // Итоговый радиус дуги = 43.5.
-    const double radius = 43.5;
+  Path _createFigmaShape({
+    required double radius,
+    required double w,
+    required double h,
+    required double d,
+    required double offset,
+    required bool isHill,
+  }) {
+    final path = Path();
+    final double r = d / 2;
 
-    // Радиус скругления "плечей" (вход в яму/на горку)
-    const double shoulder = 10.0;
+    if (isHill) {
+      // Union.png: Прямоугольник опущен вниз (в тело панели)
+      path.addRRect(
+        RRect.fromLTRBAndCorners(
+          -w / 2,
+          0,
+          w / 2,
+          h,
+          bottomLeft: Radius.circular(radius),
+          bottomRight: Radius.circular(radius),
+        ),
+      );
+      // Круг: Низ на 5px выше низа прямоугольника (Y=h-5)
+      path.addOval(
+        Rect.fromCircle(center: Offset(0, h - offset - r), radius: r),
+      );
+    } else {
+      // Union1.png: Прямоугольник торчит вверх над панелью
+      path.addRRect(
+        RRect.fromLTRBAndCorners(
+          -w / 2,
+          -h,
+          w / 2,
+          0,
+          topLeft: Radius.circular(radius),
+          topRight: Radius.circular(radius),
+        ),
+      );
+      // Круг: На 14px ниже верха прямоугольника (-h+14)
+      path.addOval(
+        Rect.fromCircle(center: Offset(0, -h + offset + r), radius: r),
+      );
+    }
 
-    // Вычисляем точки начала и конца всей конструкции
-    // Общая ширина элемента = (radius + shoulder) * 2 = 107px
-    final double startX = center - radius - shoulder;
-
-    // 1. Подходим к началу фигуры
-    path.lineTo(startX, 0);
-
-    // 2. Первое плечо (скругление)
-    // Если яма (dir=1): загибаем вниз (clockwise)
-    // Если горка (dir=-1): загибаем вверх (counter-clockwise)
-    path.arcToPoint(
-      Offset(center - radius, dir * shoulder),
-      radius: const Radius.circular(shoulder),
-      clockwise: dir == 1,
-    );
-
-    // 3. Основная дуга (Чаша или Купол)
-    // Высота/Глубина равна 'radius' относительно плечей.
-    // Если яма (dir=1): дуга идет против часовой (вогнутая)
-    // Если горка (dir=-1): дуга идет по часовой (выпуклая)
-    path.arcToPoint(
-      Offset(center + radius, dir * shoulder),
-      radius: const Radius.circular(radius),
-      clockwise: dir == -1,
-    );
-
-    // 4. Второе плечо (выход)
-    // Если яма (dir=1): загибаем вверх (clockwise)
-    // Если горка (dir=-1): загибаем вниз (counter-clockwise)
-    path.arcToPoint(
-      Offset(center + radius + shoulder, 0),
-      radius: const Radius.circular(shoulder),
-      clockwise: dir == 1,
-    );
+    // Flutter автоматически объединит перекрывающиеся Path.
+    // Поскольку у прямоугольников уже есть скругления (radius), стыки будут мягче.
+    return path;
   }
 
   @override
-  bool shouldRepaint(covariant _FigmaStrictMirrorPainter old) =>
-      old.isLeft != isLeft;
+  bool shouldRepaint(covariant _FigmaFinalPainter old) => old.isLeft != isLeft;
 }
