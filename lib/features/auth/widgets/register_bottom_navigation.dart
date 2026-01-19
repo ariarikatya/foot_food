@@ -22,11 +22,7 @@ class RegisterBottomNavigation extends StatelessWidget {
     final double lX = width * 0.25;
     final double rX = width * 0.75;
 
-    // Расчеты центров кнопок (Y=0 - верхняя линия панели)
-    // Невыбранная: Прямоугольник внутри (0 до 54). Круг на 5px выше низа (54-5=49). Центр 49-42.5 = 6.5
     const double unselectedIconBottom = barHeight - 6.5 - 42.5;
-
-    // Выбранная: Прямоугольник сверху (-50 до 0). Круг на 14px ниже верха (-50+14=-36). Центр -36+46 = 10
     const double selectedIconBottom = barHeight - 10 - 42.5;
 
     return SizedBox(
@@ -56,7 +52,6 @@ class RegisterBottomNavigation extends StatelessWidget {
             !isBuyer ? selectedIconBottom : unselectedIconBottom,
             onSellerTap,
           ),
-
           Positioned(
             bottom: 20,
             left: 45,
@@ -132,27 +127,31 @@ class _FigmaFinalPainter extends CustomPainter {
     Path mainPanel = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // 1. Невыбранная (Hill) - Прямоугольник ВНУТРИ панели (от 0 до 54)
-    Path hill = _createFigmaShape(
-      radius: 5.0,
+    // Параметры
+    const double smoothR = 20.0; // Радиус скругления стыков
+
+    // Создаем фигуры сразу со скругленными стыками в одном контуре
+    Path hill = _createSmoothShape(
       w: 123,
       h: 54,
       d: 85,
       offset: 5.0,
       isHill: true,
+      sR: smoothR,
+      rectRadius: 5,
     );
-
-    // 2. Выбранная (Hole) - Прямоугольник НАД панелью (от -50 до 0)
-    Path hole = _createFigmaShape(
-      radius: 10.0,
+    Path hole = _createSmoothShape(
       w: 140,
       h: 50,
-      d: 92,
+      d: 94,
       offset: 14.0,
       isHill: false,
+      sR: smoothR,
+      rectRadius: 10,
     );
 
     Path finalPath = mainPanel;
+
     if (isLeft) {
       finalPath = Path.combine(
         PathOperation.difference,
@@ -186,53 +185,88 @@ class _FigmaFinalPainter extends CustomPainter {
     canvas.drawPath(finalPath, paint);
   }
 
-  Path _createFigmaShape({
-    required double radius,
+  Path _createSmoothShape({
     required double w,
     required double h,
     required double d,
     required double offset,
     required bool isHill,
+    required double sR,
+    required double rectRadius,
   }) {
     final path = Path();
     final double r = d / 2;
 
     if (isHill) {
-      // Union.png: Прямоугольник опущен вниз (в тело панели)
+      // Горка (Hill) с плавным входом
+      path.moveTo(-w / 2 - sR, 0);
+      path.arcToPoint(
+        Offset(-w / 2, -0.1),
+        radius: Radius.circular(sR),
+        clockwise: true,
+      ); // Левый стык
+      path.lineTo(-w / 2, 0);
+      // Рисуем прямоугольник горки (вниз)
       path.addRRect(
         RRect.fromLTRBAndCorners(
           -w / 2,
           0,
           w / 2,
           h,
-          bottomLeft: Radius.circular(radius),
-          bottomRight: Radius.circular(radius),
+          bottomLeft: Radius.circular(rectRadius),
+          bottomRight: Radius.circular(rectRadius),
         ),
       );
-      // Круг: Низ на 5px выше низа прямоугольника (Y=h-5)
+      // Добавляем круг
       path.addOval(
         Rect.fromCircle(center: Offset(0, h - offset - r), radius: r),
       );
+      // Правый стык (добавим дугу отдельно для корректного Union)
+      Path rightSmooth = Path()
+        ..moveTo(w / 2, 0)
+        ..arcToPoint(
+          Offset(w / 2 + sR, 0),
+          radius: Radius.circular(sR),
+          clockwise: true,
+        );
+      path.addPath(rightSmooth, Offset.zero);
     } else {
-      // Union1.png: Прямоугольник торчит вверх над панелью
+      // Вырез (Hole) с плавными краями сверху
+      // Рисуем верхнюю часть выреза с "ушками" скругления
+      path.moveTo(-w / 2 - sR, 0);
+      path.lineTo(-w / 2, 0);
+      path.lineTo(-w / 2, sR);
+      path.arcToPoint(
+        Offset(-w / 2 - sR, 0),
+        radius: Radius.circular(sR),
+        clockwise: false,
+      ); // Левое скругление
+
+      path.moveTo(w / 2 + sR, 0);
+      path.lineTo(w / 2, 0);
+      path.lineTo(w / 2, sR);
+      path.arcToPoint(
+        Offset(w / 2 + sR, 0),
+        radius: Radius.circular(sR),
+        clockwise: true,
+      ); // Правое скругление
+
+      // Основной прямоугольник выреза
       path.addRRect(
         RRect.fromLTRBAndCorners(
           -w / 2,
           -h,
           w / 2,
           0,
-          topLeft: Radius.circular(radius),
-          topRight: Radius.circular(radius),
+          topLeft: Radius.circular(rectRadius),
+          topRight: Radius.circular(rectRadius),
         ),
       );
-      // Круг: На 14px ниже верха прямоугольника (-h+14)
+      // Круг выреза
       path.addOval(
         Rect.fromCircle(center: Offset(0, -h + offset + r), radius: r),
       );
     }
-
-    // Flutter автоматически объединит перекрывающиеся Path.
-    // Поскольку у прямоугольников уже есть скругления (radius), стыки будут мягче.
     return path;
   }
 

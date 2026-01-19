@@ -5,7 +5,6 @@ import '../../core/widgets/search_header_widget.dart';
 import '../../data/models/order_history_model.dart';
 import '../../data/services/mock_api_service.dart';
 import '../home/widgets/order_card.dart';
-import '../home/widgets/expanded_order_dialog.dart';
 import '../../data/models/order_model.dart';
 
 /// Экран истории заказов покупателя (Экран 11)
@@ -40,7 +39,9 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
 
   Future<void> _loadData() async {
     try {
-      final history = await _apiService.getUserOrderHistory(1);
+      // Для теста - пустой список
+      final history =
+          <OrderHistoryModel>[]; // await _apiService.getUserOrderHistory(1);
       setState(() {
         _historyOrders = history;
         _filteredOrders = history;
@@ -85,7 +86,6 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
   }
 
   void _showOrderDetails(OrderHistoryModel historyOrder) {
-    // Конвертируем OrderHistoryModel в OrderModel для показа в диалоге
     final order = OrderModel(
       id: historyOrder.id,
       idSeller: historyOrder.idSeller,
@@ -134,7 +134,6 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
                 ),
               ),
             ),
-            // Диалог без кнопки "Забронировать"
             _HistoryOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
@@ -184,15 +183,27 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
 
   Widget _buildContent() {
     if (_filteredOrders.isEmpty) {
-      return const Center(
-        child: Text(
-          'История пуста',
-          style: TextStyle(
-            fontSize: 16,
-            fontFamily: 'Montserrat',
-            color: AppColors.textSecondary,
+      return Stack(
+        children: [
+          // Размытый фон
+          BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+            child: Container(color: Colors.black.withOpacity(0.3)),
           ),
-        ),
+          // Текст по центру без белого фона
+          Center(
+            child: const Text(
+              'На данный момент история\nваших foodbox пуста',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: Colors.black,
+              ),
+            ),
+          ),
+        ],
       );
     }
 
@@ -203,7 +214,6 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
         final historyOrder = _filteredOrders[index];
         final sellerInfo = _getSellerInfo(historyOrder.idSeller);
 
-        // Конвертируем в OrderModel для OrderCard
         final order = OrderModel(
           id: historyOrder.id,
           idSeller: historyOrder.idSeller,
@@ -229,7 +239,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
   }
 }
 
-/// Диалог для заказа из истории (БЕЗ кнопки "Забронировать")
+/// Диалог для заказа из истории
 class _HistoryOrderDialog extends StatefulWidget {
   final OrderModel order;
   final String nameRestaurant;
@@ -263,7 +273,6 @@ class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
 
   String _formatTime(DateTime? time) {
     if (time == null) return '';
-    // Используем встроенное форматирование без DateFormat
     return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
   }
 
@@ -282,7 +291,6 @@ class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
               color: const Color(0x59051F20),
               offset: const Offset(4, 8),
               blurRadius: 12,
-              spreadRadius: 0,
             ),
           ],
         ),
@@ -290,7 +298,6 @@ class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
           children: [
             _buildImageCarousel(),
             Expanded(child: _buildContent()),
-            // Без кнопки "Забронировать"
           ],
         ),
       ),
@@ -406,9 +413,9 @@ class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
                   color: AppColors.textPrimary,
                 ),
               ),
-              Text(
+              const Text(
                 'Заказ выполнен',
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w600,
                   fontFamily: 'Jura',
@@ -483,7 +490,7 @@ class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
   }
 }
 
-/// Карточка заказа из истории (с кнопкой "Подробнее")
+/// Карточка заказа из истории
 class _HistoryOrderCard extends StatefulWidget {
   final OrderModel order;
   final String nameRestaurant;

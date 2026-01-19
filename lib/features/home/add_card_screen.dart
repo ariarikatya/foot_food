@@ -1,41 +1,42 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
-import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
 
-/// Экран добавления карты (Скрин "Если карта не добавлена")
-class AddCardScreen extends StatefulWidget {
-  const AddCardScreen({super.key});
+/// Диалог добавления карты
+class AddCardDialog extends StatefulWidget {
+  final bool hasCard; // Есть ли уже сохраненная карта
+
+  const AddCardDialog({super.key, this.hasCard = false});
 
   @override
-  State<AddCardScreen> createState() => _AddCardScreenState();
+  State<AddCardDialog> createState() => _AddCardDialogState();
 }
 
-class _AddCardScreenState extends State<AddCardScreen> {
+class _AddCardDialogState extends State<AddCardDialog> {
   final _formKey = GlobalKey<FormState>();
   final _cardNumberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvcController = TextEditingController();
-
-  bool _rememberCard = false;
+  final _nameController = TextEditingController();
 
   @override
   void dispose() {
     _cardNumberController.dispose();
     _expiryController.dispose();
     _cvcController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _addCard() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Логика добавления карты
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Карта успешно добавлена!'),
+        SnackBar(
+          content: Text(
+            widget.hasCard ? 'Карта изменена!' : 'Карта сохранена!',
+          ),
           backgroundColor: AppColors.success,
         ),
       );
@@ -45,86 +46,102 @@ class _AddCardScreenState extends State<AddCardScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/buyerHome.png'),
-            fit: BoxFit.cover,
-          ),
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0x59051F20),
+              offset: const Offset(4, 8),
+              blurRadius: 12,
+            ),
+          ],
         ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Верхняя белая часть с формой
+            Container(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
+              ),
+              child: Form(
+                key: _formKey,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
                       children: [
-                        const SizedBox(height: 20),
-                        _buildTitle(),
-                        const SizedBox(height: 30),
-                        _buildCardNumberField(),
-                        const SizedBox(height: 20),
-                        Row(
-                          children: [
-                            Expanded(child: _buildExpiryField()),
-                            const SizedBox(width: 15),
-                            Expanded(child: _buildCVCField()),
-                          ],
+                        GestureDetector(
+                          onTap: () => Navigator.pop(context),
+                          child: const Icon(
+                            Icons.close,
+                            color: AppColors.textPrimary,
+                            size: 24,
+                          ),
                         ),
-                        const SizedBox(height: 20),
-                        _buildRememberCardToggle(),
-                        const SizedBox(height: 40),
-                        _buildAddButton(),
                       ],
+                    ),
+                    const SizedBox(height: 10),
+                    _buildCardNumberField(),
+                    const SizedBox(height: 15),
+                    _buildNameField(),
+                    const SizedBox(height: 15),
+                    Row(
+                      children: [
+                        Expanded(child: _buildExpiryField()),
+                        const SizedBox(width: 15),
+                        Expanded(child: _buildCVCField()),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            // Нижняя темно-зеленая кнопка
+            Container(
+              height: 50,
+              decoration: const BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: BorderRadius.only(
+                  bottomLeft: Radius.circular(15),
+                  bottomRight: Radius.circular(15),
+                ),
+              ),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: _addCard,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(15),
+                    bottomRight: Radius.circular(15),
+                  ),
+                  child: Center(
+                    child: Text(
+                      widget.hasCard ? 'Изменить' : 'Сохранить',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Jura',
+                        color: Colors.white,
+                      ),
                     ),
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return const Text(
-      'Добавьте карту',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w400,
-        fontFamily: 'Montserrat',
-        color: AppColors.textPrimary,
+          ],
+        ),
       ),
     );
   }
@@ -148,10 +165,22 @@ class _AddCardScreenState extends State<AddCardScreen> {
     );
   }
 
+  Widget _buildNameField() {
+    return CustomTextField(
+      controller: _nameController,
+      hintText: 'Имя владельца',
+      keyboardType: TextInputType.text,
+      validator: (v) {
+        if (v == null || v.isEmpty) return 'Введите имя';
+        return null;
+      },
+    );
+  }
+
   Widget _buildExpiryField() {
     return CustomTextField(
       controller: _expiryController,
-      hintText: 'Срок действия',
+      hintText: 'ММ/ГГ',
       keyboardType: TextInputType.number,
       inputFormatters: [
         FilteringTextInputFormatter.digitsOnly,
@@ -176,48 +205,15 @@ class _AddCardScreenState extends State<AddCardScreen> {
         LengthLimitingTextInputFormatter(3),
       ],
       validator: (v) {
-        if (v == null || v.isEmpty) return 'Введите CVC';
-        if (v.length != 3) return 'Неверный CVC';
+        if (v == null || v.isEmpty) return 'CVC';
+        if (v.length != 3) return 'CVC';
         return null;
       },
     );
   }
-
-  Widget _buildRememberCardToggle() {
-    return Row(
-      children: [
-        const Text(
-          'Запомнить карту',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const Spacer(),
-        Switch(
-          value: _rememberCard,
-          onChanged: (value) {
-            setState(() => _rememberCard = value);
-          },
-          activeColor: AppColors.primary,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildAddButton() {
-    return CustomButton(
-      text: 'Добавить',
-      fontSize: 28,
-      fontWeight: FontWeight.w500,
-      onPressed: _addCard,
-    );
-  }
 }
 
-/// Форматтер для номера карты (#### #### #### ####)
+/// Форматтер для номера карты
 class _CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(
@@ -242,7 +238,7 @@ class _CardNumberFormatter extends TextInputFormatter {
   }
 }
 
-/// Форматтер для срока действия (ММ/ГГ)
+/// Форматтер для срока действия
 class _ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(

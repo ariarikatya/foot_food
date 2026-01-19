@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 
-/// Экран "О приложении" (Скрин "О приложении")
+/// Экран "О приложении"
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({super.key});
 
@@ -13,10 +13,9 @@ class AboutAppScreen extends StatelessWidget {
         width: double.infinity,
         height: double.infinity,
         decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFF163832), Color(0xFF0B2B26)],
+          image: DecorationImage(
+            image: AssetImage('assets/images/splash.png'),
+            fit: BoxFit.cover,
           ),
         ),
         child: SafeArea(
@@ -29,31 +28,17 @@ class AboutAppScreen extends StatelessWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Иллюстрация (верхняя)
+                      // Логотип
                       Image.asset(
-                        'assets/images/firstenter1.png',
-                        width: 250,
-                        height: 150,
+                        'assets/images/logo.png',
+                        width: 200,
+                        height: 200,
                         fit: BoxFit.contain,
                         errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(width: 250, height: 150);
+                          return const SizedBox(width: 200, height: 200);
                         },
                       ),
-                      const SizedBox(height: 40),
-
-                      // Логотип и название
-                      const Text(
-                        'Foot\nFood',
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontSize: 48,
-                          fontWeight: FontWeight.w500,
-                          fontFamily: 'Jura',
-                          color: Colors.white,
-                          height: 1.1,
-                        ),
-                      ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 10),
 
                       // Версия
                       const Text(
@@ -64,18 +49,6 @@ class AboutAppScreen extends StatelessWidget {
                           fontFamily: 'Montserrat',
                           color: Color(0xFF7FA29A),
                         ),
-                      ),
-                      const SizedBox(height: 60),
-
-                      // Иллюстрация (нижняя)
-                      Image.asset(
-                        'assets/images/firstenter4.png',
-                        width: 250,
-                        height: 150,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(width: 250, height: 150);
-                        },
                       ),
                       const Spacer(),
 

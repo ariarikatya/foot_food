@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/constants/app_spacing.dart';
 import '../../../core/constants/app_text_styles.dart';
@@ -15,6 +17,10 @@ class AddressMapScreen extends StatefulWidget {
 }
 
 class _AddressMapScreenState extends State<AddressMapScreen> {
+  final MapController _mapController = MapController();
+
+  // Координаты Перми по умолчанию
+  LatLng _selectedPosition = LatLng(58.0105, 56.2502);
   String _selectedAddress = 'Пермь\nулица Революции, 13';
 
   @override
@@ -22,7 +28,7 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
     return Scaffold(
       body: Stack(
         children: [
-          _buildMapPlaceholder(),
+          _buildMap(),
           _buildLocationMarker(),
           _buildTopControls(),
           _buildBottomPanel(),
@@ -31,33 +37,44 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
     );
   }
 
-  Widget _buildMapPlaceholder() {
-    return Container(
-      color: Colors.grey[300],
-      child: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.map, size: 100, color: Colors.grey[400]),
-            const SizedBox(height: AppSpacing.md),
-            Text(
-              'Карта будет здесь',
-              style: AppTextStyles.h3.copyWith(color: Colors.grey[600]),
-            ),
-            const SizedBox(height: AppSpacing.sm),
-            Text(
-              'Интеграция с Google Maps / Yandex Maps',
-              style: AppTextStyles.bodyMedium.copyWith(color: Colors.grey[600]),
-            ),
-          ],
-        ),
+  Widget _buildMap() {
+    return FlutterMap(
+      mapController: _mapController,
+      options: MapOptions(
+        initialCenter: _selectedPosition,
+        initialZoom: 15.0,
+        minZoom: 10.0,
+        maxZoom: 18.0,
+        onPositionChanged: (MapPosition position, bool hasGesture) {
+          if (hasGesture && position.center != null) {
+            setState(() {
+              _selectedPosition = position.center!;
+              // Здесь можно добавить обратное геокодирование для получения адреса
+              _selectedAddress =
+                  'Пермь\nКоординаты: ${_selectedPosition.latitude.toStringAsFixed(4)}, ${_selectedPosition.longitude.toStringAsFixed(4)}';
+            });
+          }
+        },
       ),
+      children: [
+        TileLayer(
+          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+          userAgentPackageName: 'com.example.foot_food',
+        ),
+      ],
     );
   }
 
   Widget _buildLocationMarker() {
-    return const Center(
-      child: Icon(Icons.location_on, size: 50, color: AppColors.primary),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.location_on, size: 50, color: AppColors.primary),
+          // Смещение маркера вверх для точности центра
+          SizedBox(height: 25),
+        ],
+      ),
     );
   }
 
@@ -78,7 +95,8 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
             _buildCircleButton(
               icon: Icons.my_location,
               onPressed: () {
-                // TODO: Реализовать определение текущего местоположения
+                // Центрировать карту на координатах Перми
+                _mapController.move(_selectedPosition, 15.0);
               },
             ),
           ],
@@ -117,12 +135,19 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
       right: 0,
       child: Container(
         padding: const EdgeInsets.all(AppSpacing.lg),
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           color: AppColors.backgroundWhite,
-          borderRadius: BorderRadius.only(
+          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(30),
             topRight: Radius.circular(30),
           ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 10,
+              offset: const Offset(0, -2),
+            ),
+          ],
         ),
         child: SafeArea(
           child: Column(
@@ -132,6 +157,14 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
               Text('Адрес вашего ресторана', style: AppTextStyles.h3),
               const SizedBox(height: AppSpacing.md),
               Text(_selectedAddress, style: AppTextStyles.bodyLarge),
+              const SizedBox(height: AppSpacing.sm),
+              Text(
+                'Переместите карту для выбора точного местоположения',
+                style: AppTextStyles.bodyMedium.copyWith(
+                  color: AppColors.textSecondary,
+                  fontSize: 12,
+                ),
+              ),
               const SizedBox(height: AppSpacing.lg),
               CustomButton(
                 text: 'Готово',

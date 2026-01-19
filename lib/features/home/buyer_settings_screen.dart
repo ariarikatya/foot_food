@@ -1,10 +1,8 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
 import 'about_app_screen.dart';
 import 'add_card_screen.dart';
 import '../onboarding/onboarding_screen.dart';
@@ -31,106 +29,61 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/buset.png'),
-            fit: BoxFit.cover,
+      body: Stack(
+        children: [
+          Container(
+            width: double.infinity,
+            height: double.infinity,
+            decoration: const BoxDecoration(
+              image: DecorationImage(
+                image: AssetImage('assets/images/buset.png'),
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildTitle(),
-                      const SizedBox(height: 30),
-                      _buildPhoneField(),
-                      const SizedBox(height: 30),
-                      _buildCityField(),
-                      const SizedBox(height: 30),
-                      _buildChangeDataButton(),
-                      const SizedBox(height: 15),
-                      _buildChangePasswordButton(),
-                      const SizedBox(height: 15),
-                      _buildTrainingButton(),
-                      const SizedBox(height: 40),
-                      _buildAboutSection(),
-                      const SizedBox(height: 20),
-                      _buildSupportSection(),
-                      const SizedBox(height: 40),
-                      _buildLogoutButton(),
-                      const SizedBox(height: 20),
-                      _buildDeleteAccountButton(),
-                      const SizedBox(height: 180), // Место для навигации
-                    ],
+          // Контент
+          Positioned.fill(
+            child: Column(
+              children: [
+                // Верхняя часть с прокруткой
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: EdgeInsets.only(
+                      top: MediaQuery.of(context).padding.top + 20,
+                      left: AppSpacing.lg,
+                      right: AppSpacing.lg,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const SizedBox(height: 20),
+                        _buildTitle(),
+                        const SizedBox(height: 60),
+                        _buildChangeDataButton(),
+                        const SizedBox(height: 15),
+                        _buildChangePasswordButton(),
+                        const SizedBox(height: 15),
+                        _buildTrainingButton(),
+                        const SizedBox(height: 40),
+                        _buildAboutSection(),
+                        const SizedBox(height: 40),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 6),
-            blurRadius: 12,
+                // Нижние кнопки с отступом 49 от меню
+                Padding(
+                  padding: const EdgeInsets.only(
+                    left: AppSpacing.lg,
+                    right: AppSpacing.lg,
+                    bottom: 49 + 180, // 49 от меню + высота меню
+                  ),
+                  child: _buildLogoutAndDeleteRow(),
+                ),
+              ],
+            ),
           ),
         ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 17),
-        child: Row(
-          children: [
-            const Spacer(),
-            const Text(
-              'Настройки',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: Color(0xFF7FA29A),
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AboutAppScreen(),
-                  ),
-                );
-              },
-              child: const Icon(
-                Icons.info_outline,
-                color: Color(0xFF7FA29A),
-                size: 25,
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }
@@ -145,45 +98,33 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           height: 41,
           fit: BoxFit.contain,
         ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                _phoneController.text,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Montserrat',
-                  color: AppColors.textPrimary,
-                ),
+        const Spacer(),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Text(
+              _phoneController.text,
+              style: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: Colors.black,
               ),
-              const SizedBox(height: 4),
-              Text(
-                'Город: ${_cityController.text}',
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  fontFamily: 'Montserrat',
-                  color: AppColors.textSecondary,
-                ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'Город: ${_cityController.text}',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                fontFamily: 'Montserrat',
+                color: Colors.black,
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ],
     );
-  }
-
-  Widget _buildPhoneField() {
-    // Удалено - информация теперь в _buildTitle
-    return const SizedBox.shrink();
-  }
-
-  Widget _buildCityField() {
-    // Удалено - информация теперь в _buildTitle
-    return const SizedBox.shrink();
   }
 
   Widget _buildChangeDataButton() {
@@ -203,10 +144,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
       fontSize: 22,
       fontWeight: FontWeight.w400,
       onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AddCardScreen()),
-        );
+        _showAddCardDialog();
       },
     );
   }
@@ -217,12 +155,10 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
       fontSize: 22,
       fontWeight: FontWeight.w400,
       onPressed: () async {
-        // Показываем onboarding, но не заменяем текущий маршрут
         await Navigator.push(
           context,
           MaterialPageRoute(builder: (context) => const OnboardingScreen()),
         );
-        // После закрытия onboarding остаемся на settings
       },
     );
   }
@@ -253,89 +189,40 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
     );
   }
 
-  Widget _buildSupportSection() {
-    return GestureDetector(
-      onTap: () async {
-        final Uri emailUri = Uri(
-          scheme: 'mailto',
-          path: 'support@footfood.ru',
-          query: 'subject=Вопрос по приложению Foot Food',
-        );
-
-        if (await canLaunchUrl(emailUri)) {
-          await launchUrl(emailUri);
-        } else {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Не удалось открыть почтовый клиент'),
-                backgroundColor: AppColors.error,
+  Widget _buildLogoutAndDeleteRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _showLogoutConfirmation,
+            child: const Text(
+              'Выйти',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: AppColors.textPrimary,
               ),
-            );
-          }
-        }
-      },
-      child: Row(
-        children: [
-          const Icon(Icons.help_outline, color: AppColors.textPrimary),
-          const SizedBox(width: 10),
-          const Text(
-            'Вопросы и помощь',
-            style: TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
             ),
           ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () {
-          _showLogoutConfirmation();
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15),
         ),
-        child: const Text(
-          'Выйти',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
+        Expanded(
+          child: GestureDetector(
+            onTap: _showDeleteConfirmation,
+            child: const Text(
+              'Удалить аккаунт',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: AppColors.error,
+              ),
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildDeleteAccountButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () {
-          _showDeleteConfirmation();
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text(
-          'Удалить аккаунт',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.error,
-          ),
-        ),
-      ),
+      ],
     );
   }
 
@@ -378,6 +265,32 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
     );
   }
 
+  void _showAddCardDialog() {
+    // Здесь можно проверить, есть ли сохраненная карта
+    final bool hasCard = false; // Замените на реальную проверку
+
+    showDialog(
+      context: context,
+      barrierColor: Colors.transparent,
+      useSafeArea: false,
+      builder: (context) {
+        return Stack(
+          fit: StackFit.expand,
+          children: [
+            BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(color: Colors.black.withOpacity(0.3)),
+              ),
+            ),
+            AddCardDialog(hasCard: hasCard),
+          ],
+        );
+      },
+    );
+  }
+
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
@@ -406,82 +319,99 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 50),
         child: Container(
-          padding: const EdgeInsets.all(20),
+          height: 118,
           decoration: BoxDecoration(
-            color: const Color(0xFF163832),
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x59000000),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+              ),
+            ],
           ),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Вы действительно хотите удалить аккаунт?',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Montserrat',
-                  color: Colors.white,
+              // Верхняя часть - темно-зеленый фон
+              Container(
+                height: 68,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF163832),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: const Text(
+                  'Вы действительно хотите удалить аккаунт?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    fontFamily: 'Montserrat',
+                    color: Colors.white,
+                  ),
                 ),
               ),
-              const SizedBox(height: 30),
-              Row(
-                children: [
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                        // Удалить аккаунт
-                        Navigator.of(
-                          context,
-                        ).pushNamedAndRemoveUntil('/auth', (route) => false);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.white,
-                        foregroundColor: AppColors.primary,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Да',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Montserrat',
+              // Нижняя часть - белый фон с кнопками
+              Container(
+                height: 50,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const SizedBox(width: 60),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(
+                            context,
+                          ).pushNamedAndRemoveUntil('/auth', (route) => false);
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Да',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Colors.black,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 15),
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.white,
-                        side: const BorderSide(
-                          color: AppColors.error,
-                          width: 2,
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: const Text(
-                        'Нет',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w600,
-                          fontFamily: 'Montserrat',
-                          color: AppColors.error,
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Center(
+                          child: Text(
+                            'Нет',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Color(0xFFBA1A1A),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                    const SizedBox(width: 60),
+                  ],
+                ),
               ),
             ],
           ),
