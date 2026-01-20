@@ -1,5 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
@@ -41,11 +42,9 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
               ),
             ),
           ),
-          // Контент
           Positioned.fill(
             child: Column(
               children: [
-                // Верхняя часть с прокруткой
                 Expanded(
                   child: SingleChildScrollView(
                     padding: EdgeInsets.only(
@@ -71,12 +70,11 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                     ),
                   ),
                 ),
-                // Нижние кнопки с отступом 49 от меню
                 Padding(
                   padding: const EdgeInsets.only(
                     left: AppSpacing.lg,
                     right: AppSpacing.lg,
-                    bottom: 49 + 180, // 49 от меню + высота меню
+                    bottom: 49 + 180,
                   ),
                   child: _buildLogoutAndDeleteRow(),
                 ),
@@ -228,46 +226,145 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
 
   void _showCitySelectionDialog() {
     final cities = ['Пермь', 'Казань', 'Сочи', 'Уфа'];
+    final searchController = TextEditingController();
+    final scrollController = ScrollController();
 
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
-        child: Container(
-          padding: const EdgeInsets.all(20),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: cities.map((city) {
-              return ListTile(
-                title: Text(
-                  city,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Montserrat',
+        child: StatefulBuilder(
+          builder: (context, setState) {
+            return Container(
+              height: 184,
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(15),
+              ),
+              child: Column(
+                children: [
+                  // Поле поиска
+                  Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: AppColors.primary,
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(15),
+                        topRight: Radius.circular(15),
+                      ),
+                    ),
+                    padding: const EdgeInsets.only(left: 10),
+                    child: Row(
+                      children: [
+                        SvgPicture.asset(
+                          'assets/images/search.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: const ColorFilter.mode(
+                            Colors.white,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                        const SizedBox(width: 9),
+                        Expanded(
+                          child: TextField(
+                            controller: searchController,
+                            onChanged: (value) => setState(() {}),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w400,
+                              fontFamily: 'Montserrat',
+                              color: Colors.white,
+                            ),
+                            decoration: const InputDecoration(
+                              hintText: 'Поиск',
+                              hintStyle: TextStyle(color: Colors.white70),
+                              border: InputBorder.none,
+                              isDense: true,
+                              contentPadding: EdgeInsets.zero,
+                              filled: false,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-                onTap: () {
-                  setState(() {
-                    _cityController.text = city;
-                  });
-                  Navigator.pop(context);
-                },
-              );
-            }).toList(),
-          ),
+                  // Список городов со скроллбаром
+                  Expanded(
+                    child: NotificationListener<ScrollNotification>(
+                      onNotification: (notification) {
+                        setState(() {});
+                        return true;
+                      },
+                      child: Stack(
+                        children: [
+                          ListView(
+                            controller: scrollController,
+                            padding: EdgeInsets.zero,
+                            children: cities
+                                .where(
+                                  (city) => city.toLowerCase().contains(
+                                    searchController.text.toLowerCase(),
+                                  ),
+                                )
+                                .map((city) {
+                                  return ListTile(
+                                    dense: true,
+                                    title: Text(
+                                      city,
+                                      style: const TextStyle(
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w400,
+                                        fontFamily: 'Montserrat',
+                                        color: Colors.black,
+                                      ),
+                                    ),
+                                    onTap: () {
+                                      this.setState(() {
+                                        _cityController.text = city;
+                                      });
+                                      Navigator.pop(context);
+                                    },
+                                  );
+                                })
+                                .toList(),
+                          ),
+                          // Динамический скроллбар
+                          if (scrollController.hasClients &&
+                              scrollController.position.maxScrollExtent > 0)
+                            Positioned(
+                              right: 0,
+                              top:
+                                  15 +
+                                  (scrollController.offset /
+                                      scrollController
+                                          .position
+                                          .maxScrollExtent *
+                                      (134 - 104 - 15)),
+                              child: Container(
+                                width: 4,
+                                height: 104,
+                                decoration: BoxDecoration(
+                                  color: AppColors.primary,
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
   void _showAddCardDialog() {
-    // Здесь можно проверить, есть ли сохраненная карта
-    final bool hasCard = false; // Замените на реальную проверку
+    final bool hasCard = false;
 
     showDialog(
       context: context,
@@ -294,33 +391,11 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   void _showLogoutConfirmation() {
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Выход'),
-        content: const Text('Вы уверены, что хотите выйти?'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Отмена'),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              Navigator.of(context).pushReplacementNamed('/auth');
-            },
-            child: const Text('Выйти'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation() {
-    showDialog(
-      context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 50),
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 293),
           height: 118,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -335,7 +410,108 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Верхняя часть - темно-зеленый фон
+              Container(
+                height: 68,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF163832),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: const Text(
+                  'Вы действительно хотите выйти?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    fontFamily: 'Montserrat',
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Container(
+                height: 50,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).pushReplacementNamed('/auth');
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Да',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 91),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Center(
+                          child: Text(
+                            'Нет',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Color(0xFFBA1A1A),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 50),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 293),
+          height: 118,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x59000000),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Container(
                 height: 68,
                 decoration: const BoxDecoration(
@@ -358,7 +534,6 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                   ),
                 ),
               ),
-              // Нижняя часть - белый фон с кнопками
               Container(
                 height: 50,
                 decoration: const BoxDecoration(
@@ -371,7 +546,6 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 60),
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
@@ -393,6 +567,7 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 91),
                     Expanded(
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
@@ -409,7 +584,6 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 60),
                   ],
                 ),
               ),

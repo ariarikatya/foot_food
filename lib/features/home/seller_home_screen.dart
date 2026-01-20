@@ -9,6 +9,7 @@ import '../../data/services/mock_api_service.dart';
 import 'widgets/seller_order_card.dart';
 import 'widgets/seller_order_dialog.dart';
 import 'widgets/order_section.dart';
+import 'widgets/qr_scanner_widgets.dart';
 
 class SellerHomeScreen extends StatefulWidget {
   const SellerHomeScreen({super.key});
@@ -99,12 +100,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
+      useSafeArea: false,
       builder: (dialogContext) {
         return Stack(
-          fit: StackFit.expand, // Растягиваем на весь экран
+          fit: StackFit.expand,
           children: [
-            // Размытие ВСЕГО экрана без SafeArea
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
@@ -112,7 +112,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 child: Container(color: Colors.black.withOpacity(0.3)),
               ),
             ),
-            // Header поверх размытия (не размыт) - кликабельный
             Positioned(
               top: 0,
               left: 0,
@@ -120,13 +119,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  // Закрываем карточку при клике на header/поиск
                   Navigator.pop(dialogContext);
                 },
                 child: Material(
                   type: MaterialType.transparency,
                   child: AbsorbPointer(
-                    // Блокируем TextField от получения фокуса
                     child: SearchHeaderWidget(
                       searchController: _searchController,
                       showFilter: false,
@@ -135,7 +132,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 ),
               ),
             ),
-            // Диалог карточки (не размыт)
             ActiveOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
@@ -157,12 +153,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
+      useSafeArea: false,
       builder: (dialogContext) {
         return Stack(
-          fit: StackFit.expand, // Растягиваем на весь экран
+          fit: StackFit.expand,
           children: [
-            // Размытие ВСЕГО экрана без SafeArea
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
@@ -170,7 +165,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 child: Container(color: Colors.black.withOpacity(0.3)),
               ),
             ),
-            // Header поверх размытия (не размыт) - кликабельный
             Positioned(
               top: 0,
               left: 0,
@@ -178,13 +172,11 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () {
-                  // Закрываем карточку при клике на header/поиск
                   Navigator.pop(dialogContext);
                 },
                 child: Material(
                   type: MaterialType.transparency,
                   child: AbsorbPointer(
-                    // Блокируем TextField от получения фокуса
                     child: SearchHeaderWidget(
                       searchController: _searchController,
                       showFilter: false,
@@ -193,7 +185,6 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
                 ),
               ),
             ),
-            // Диалог карточки (не размыт)
             HistoryOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
@@ -207,10 +198,43 @@ class _SellerHomeScreenState extends State<SellerHomeScreen> {
   }
 
   void _handleCompleteOrder(OrderModel order) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Заказ #${order.numberOrder} выдан'),
-        backgroundColor: AppColors.success,
+    final sellerInfo = _getSellerInfo(order.idSeller);
+
+    // Показываем QR-сканер
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => QRScannerScreen(
+          order: order,
+          onScanSuccess: () {
+            // После успешного сканирования показываем экран оплаты
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => PaymentConfirmationScreen(
+                  order: order,
+                  nameRestaurant: sellerInfo['nameRestaurant']!,
+                  onPaymentConfirm: () {
+                    // Переводим заказ в историю
+                    setState(() {
+                      _activeOrders.remove(order);
+                      _filteredActiveOrders.remove(order);
+                    });
+
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Заказ #${order.numberOrder} выполнен'),
+                        backgroundColor: AppColors.success,
+                      ),
+                    );
+
+                    Navigator.pop(context);
+                  },
+                ),
+              ),
+            );
+          },
+        ),
       ),
     );
   }

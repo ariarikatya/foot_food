@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
@@ -25,8 +24,6 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
   final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
 
-  List<String> _selectedPhotos = [];
-
   @override
   void dispose() {
     _cookingTimeController.dispose();
@@ -34,22 +31,6 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
     _descriptionController.dispose();
     _priceController.dispose();
     super.dispose();
-  }
-
-  Future<void> _pickImages() async {
-    try {
-      final List<XFile> images = await _imagePicker.pickMultiImage(
-        imageQuality: 85,
-      );
-
-      if (images.isNotEmpty) {
-        setState(() {
-          _selectedPhotos = images.map((img) => img.path).toList();
-        });
-      }
-    } catch (e) {
-      _showError('Ошибка выбора изображений: $e');
-    }
   }
 
   Future<void> _selectTime(
@@ -76,15 +57,12 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
 
   Future<void> _createFoodbox() async {
     if (_formKey.currentState?.validate() ?? false) {
-      // Здесь будет логика создания foodbox
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Foodbox создан успешно!'),
           backgroundColor: AppColors.success,
         ),
       );
-
-      // Вернуться на главный экран
       Navigator.pop(context);
     }
   }
@@ -103,91 +81,34 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 20),
-                        _buildTitle(),
-                        const SizedBox(height: 30),
-                        _buildCookingTimeField(),
-                        const SizedBox(height: 30),
-                        _buildSaleEndTimeField(),
-                        const SizedBox(height: 30),
-                        _buildCompositionToggle(),
-                        const SizedBox(height: 30),
-                        _buildDescriptionField(),
-                        const SizedBox(height: 30),
-                        _buildPriceField(),
-                        const SizedBox(height: 30),
-                        _buildPhotoSection(),
-                        const SizedBox(height: 40),
-                        _buildCreateButton(),
-                        const SizedBox(height: 180), // Место для навигации
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 6),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 17),
-        child: Row(
-          children: [
-            GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: SvgPicture.asset(
-                'assets/images/Vector.svg',
-                width: 24,
-                height: 24,
-                colorFilter: const ColorFilter.mode(
-                  Color(0xFF7FA29A),
-                  BlendMode.srcIn,
-                ),
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(AppSpacing.lg),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  const SizedBox(height: 20),
+                  _buildTitle(),
+                  const SizedBox(height: 30),
+                  _buildCookingTimeField(),
+                  const SizedBox(height: 30),
+                  _buildSaleEndTimeField(),
+                  const SizedBox(height: 30),
+                  _buildCompositionToggle(),
+                  const SizedBox(height: 30),
+                  _buildDescriptionField(),
+                  const SizedBox(height: 30),
+                  _buildPriceField(),
+                  const SizedBox(height: 10),
+                  _buildTotalPrice(),
+                  const SizedBox(height: 40),
+                  _buildCreateButton(),
+                  const SizedBox(height: 180),
+                ],
               ),
             ),
-            const Spacer(),
-            const Text(
-              'Создать foodbox',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: Color(0xFF7FA29A),
-              ),
-            ),
-            const Spacer(),
-            const SizedBox(width: 24), // Баланс с кнопкой назад
-          ],
+          ),
         ),
       ),
     );
@@ -196,6 +117,7 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
   Widget _buildTitle() {
     return const Text(
       'Создать foodbox',
+      textAlign: TextAlign.center,
       style: TextStyle(
         fontSize: 20,
         fontWeight: FontWeight.w300,
@@ -214,7 +136,6 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
           hintText: 'Время приготовления',
           validator: (v) =>
               v == null || v.isEmpty ? 'Укажите время приготовления' : null,
-          suffixIcon: const Icon(Icons.access_time, color: AppColors.primary),
         ),
       ),
     );
@@ -228,42 +149,91 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
           controller: _saleEndTimeController,
           hintText: 'В продаже до',
           validator: (v) => v == null || v.isEmpty ? 'Укажите время' : null,
-          suffixIcon: const Icon(Icons.access_time, color: AppColors.primary),
         ),
       ),
     );
   }
 
   Widget _buildCompositionToggle() {
-    return Row(
-      children: [
-        const Text(
-          'Состав',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
+    return Container(
+      height: 60,
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(30),
+        border: Border.all(color: AppColors.border, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x4D051F20),
+            offset: const Offset(4, 8),
+            blurRadius: 12,
           ),
-        ),
-        const Spacer(),
-        Switch(
-          value: _compositionEnabled,
-          onChanged: (value) {
-            setState(() => _compositionEnabled = value);
-          },
-          activeColor: AppColors.primary,
-        ),
-      ],
+        ],
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      child: Row(
+        children: [
+          const Text(
+            'Состав',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Montserrat',
+              color: Color(0xFF1A1C1B),
+            ),
+          ),
+          const Spacer(),
+          Switch(
+            value: _compositionEnabled,
+            onChanged: (value) {
+              setState(() => _compositionEnabled = value);
+            },
+            activeColor: AppColors.primary,
+          ),
+        ],
+      ),
     );
   }
 
   Widget _buildDescriptionField() {
-    return CustomTextField(
-      controller: _descriptionController,
-      hintText: 'Описание',
-      maxLines: 4,
-      validator: (v) => v == null || v.isEmpty ? 'Добавьте описание' : null,
+    return Container(
+      constraints: const BoxConstraints(minHeight: 60),
+      child: TextField(
+        controller: _descriptionController,
+        maxLines: null,
+        style: const TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w400,
+          color: Color(0xFF1A1C1B),
+          fontFamily: 'Montserrat',
+        ),
+        decoration: InputDecoration(
+          hintText: 'Описание',
+          hintStyle: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.w400,
+            color: Color(0xFF1A1C1B),
+            fontFamily: 'Montserrat',
+          ),
+          filled: true,
+          fillColor: Colors.white.withOpacity(0.3),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 16,
+            vertical: 16,
+          ),
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: AppColors.border, width: 2),
+          ),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: AppColors.border, width: 2),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(30),
+            borderSide: const BorderSide(color: AppColors.border, width: 2),
+          ),
+        ),
+      ),
     );
   }
 
@@ -277,133 +247,21 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
         if (double.tryParse(v) == null) return 'Неверный формат';
         return null;
       },
-      suffixIcon: const Padding(
-        padding: EdgeInsets.only(right: 16, top: 16),
-        child: Text(
-          '₽',
-          style: TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
-          ),
+    );
+  }
+
+  Widget _buildTotalPrice() {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: Text(
+        'Итоговая стоимость: ${_priceController.text.isEmpty ? "0" : _priceController.text} ₽',
+        style: const TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w400,
+          fontFamily: 'Montserrat',
+          color: AppColors.textPrimary,
         ),
       ),
-    );
-  }
-
-  Widget _buildPhotoSection() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Фото:',
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
-          ),
-        ),
-        const SizedBox(height: 15),
-        if (_selectedPhotos.isEmpty)
-          _buildAddPhotoButton()
-        else
-          _buildPhotoGrid(),
-      ],
-    );
-  }
-
-  Widget _buildAddPhotoButton() {
-    return GestureDetector(
-      onTap: _pickImages,
-      child: Container(
-        width: double.infinity,
-        height: 150,
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.3),
-          borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-          border: Border.all(color: AppColors.border, width: 2),
-        ),
-        child: const Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(Icons.add_photo_alternate, size: 48, color: AppColors.primary),
-            SizedBox(height: 10),
-            Text(
-              'Добавить фото',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: AppColors.textPrimary,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildPhotoGrid() {
-    return Column(
-      children: [
-        GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 3,
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
-          ),
-          itemCount: _selectedPhotos.length,
-          itemBuilder: (context, index) {
-            return Container(
-              decoration: BoxDecoration(
-                color: Colors.grey[300],
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: AppColors.border, width: 2),
-              ),
-              child: Stack(
-                children: [
-                  Center(
-                    child: Icon(Icons.image, size: 40, color: Colors.grey[600]),
-                  ),
-                  Positioned(
-                    top: 5,
-                    right: 5,
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedPhotos.removeAt(index);
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: AppColors.error,
-                          shape: BoxShape.circle,
-                        ),
-                        child: const Icon(
-                          Icons.close,
-                          size: 16,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-        const SizedBox(height: 15),
-        TextButton.icon(
-          onPressed: _pickImages,
-          icon: const Icon(Icons.add),
-          label: const Text('Добавить еще фото'),
-        ),
-      ],
     );
   }
 

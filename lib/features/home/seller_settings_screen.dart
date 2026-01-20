@@ -4,7 +4,6 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
 import 'seller_verification_screen.dart';
 import 'about_app_screen.dart';
 
@@ -19,22 +18,12 @@ class SellerSettingsScreen extends StatefulWidget {
 class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   final _imagePicker = ImagePicker();
 
-  final _emailController = TextEditingController(text: 'insdfnsdf@mail.ru');
-  final _nameController = TextEditingController(text: 'Никала Пиросмани');
-  final _addressController = TextEditingController(
-    text: 'Пермь, ул. Монастырская 57',
-  );
+  String _logoPath = '';
+  String _nameRestaurant = 'Никала Пиросмани';
+  String _email = 'insdfnsdf@mail.ru';
+  String _address = 'Пермь, ул. Монастырская 57';
 
-  String? _logoPath;
   String _verificationStatus = 'pending'; // pending, approved, rejected
-
-  @override
-  void dispose() {
-    _emailController.dispose();
-    _nameController.dispose();
-    _addressController.dispose();
-    super.dispose();
-  }
 
   Future<void> _pickLogo() async {
     try {
@@ -80,111 +69,39 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
         ),
         child: SafeArea(
           bottom: false,
-          child: Column(
-            children: [
-              _buildHeader(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 20),
-                      _buildTitle(),
-                      const SizedBox(height: 30),
-                      _buildLogoSection(),
-                      const SizedBox(height: 30),
-                      _buildNameField(),
-                      const SizedBox(height: 20),
-                      _buildEmailField(),
-                      const SizedBox(height: 20),
-                      _buildAddressField(),
-                      const SizedBox(height: 30),
-                      _buildChangeDataButton(),
-                      const SizedBox(height: 15),
-                      _buildChangePasswordButton(),
-                      const SizedBox(height: 30),
-                      _buildVerificationSection(),
-                      const SizedBox(height: 40),
-                      _buildAboutSection(),
-                      const SizedBox(height: 20),
-                      _buildSupportSection(),
-                      const SizedBox(height: 40),
-                      _buildLogoutButton(),
-                      const SizedBox(height: 20),
-                      _buildDeleteAccountButton(),
-                      const SizedBox(height: 180),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: AppSpacing.lg,
+              right: AppSpacing.lg,
+              top: 20,
+              bottom: 180 + 49, // Высота навигации + отступ
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildLogoSection(),
+                const SizedBox(height: 30),
+                _buildInfoText('Название:', _nameRestaurant),
+                const SizedBox(height: 15),
+                _buildInfoText('Email:', _email),
+                const SizedBox(height: 15),
+                _buildInfoText('Адрес:', _address),
+                const SizedBox(height: 30),
+                _buildChangeDataButton(),
+                const SizedBox(height: 15),
+                _buildChangePasswordButton(),
+                const SizedBox(height: 30),
+                _buildVerificationSection(),
+                const SizedBox(height: 40),
+                _buildAboutSection(),
+                const SizedBox(height: 20),
+                _buildSupportSection(),
+                const SizedBox(height: 40),
+                _buildLogoutAndDeleteRow(),
+              ],
+            ),
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Container(
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
-          bottomLeft: Radius.circular(10),
-          bottomRight: Radius.circular(10),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 6),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 31, vertical: 17),
-        child: Row(
-          children: [
-            const Spacer(),
-            const Text(
-              'Настройки',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: Color(0xFF7FA29A),
-              ),
-            ),
-            const Spacer(),
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const AboutAppScreen(),
-                  ),
-                );
-              },
-              child: const Icon(
-                Icons.info_outline,
-                color: Color(0xFF7FA29A),
-                size: 25,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return const Text(
-      'Foot Food',
-      style: TextStyle(
-        fontSize: 28,
-        fontWeight: FontWeight.w500,
-        fontFamily: 'Jura',
-        color: AppColors.textPrimary,
       ),
     );
   }
@@ -213,7 +130,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 color: Colors.grey[300],
                 border: Border.all(color: const Color(0xFF10292A), width: 2),
               ),
-              child: _logoPath != null
+              child: _logoPath.isNotEmpty
                   ? const Icon(Icons.restaurant, size: 60, color: Colors.grey)
                   : const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
             ),
@@ -223,27 +140,30 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
     );
   }
 
-  Widget _buildNameField() {
-    return CustomTextField(
-      controller: _nameController,
-      hintText: 'Название',
-      enabled: false,
-    );
-  }
-
-  Widget _buildEmailField() {
-    return CustomTextField(
-      controller: _emailController,
-      hintText: 'Email',
-      enabled: false,
-    );
-  }
-
-  Widget _buildAddressField() {
-    return CustomTextField(
-      controller: _addressController,
-      hintText: 'Адрес',
-      enabled: false,
+  Widget _buildInfoText(String label, String value) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          value,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Montserrat',
+            color: AppColors.textPrimary,
+          ),
+        ),
+      ],
     );
   }
 
@@ -436,78 +356,51 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
     );
   }
 
-  Widget _buildLogoutButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => AlertDialog(
-              title: const Text('Выход'),
-              content: const Text('Вы уверены, что хотите выйти?'),
-              actions: [
-                TextButton(
-                  onPressed: () => Navigator.pop(context),
-                  child: const Text('Отмена'),
-                ),
-                TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                    Navigator.of(context).pushReplacementNamed('/auth');
-                  },
-                  child: const Text('Выйти'),
-                ),
-              ],
+  Widget _buildLogoutAndDeleteRow() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: GestureDetector(
+            onTap: _showLogoutConfirmation,
+            child: const Text(
+              'Выйти',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: AppColors.textPrimary,
+              ),
             ),
-          );
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text(
-          'Выйти',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.textPrimary,
           ),
         ),
-      ),
+        Expanded(
+          child: GestureDetector(
+            onTap: _showDeleteConfirmation,
+            child: const Text(
+              'Удалить аккаунт',
+              textAlign: TextAlign.right,
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: AppColors.error,
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
-  Widget _buildDeleteAccountButton() {
-    return SizedBox(
-      width: double.infinity,
-      child: TextButton(
-        onPressed: () {
-          _showDeleteConfirmation();
-        },
-        style: TextButton.styleFrom(
-          padding: const EdgeInsets.symmetric(vertical: 15),
-        ),
-        child: const Text(
-          'Удалить аккаунт',
-          style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w400,
-            fontFamily: 'Montserrat',
-            color: AppColors.error,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showDeleteConfirmation() {
+  void _showLogoutConfirmation() {
     showDialog(
       context: context,
       builder: (context) => Dialog(
         backgroundColor: Colors.transparent,
         insetPadding: const EdgeInsets.symmetric(horizontal: 50),
         child: Container(
+          constraints: const BoxConstraints(maxWidth: 293),
           height: 118,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(8),
@@ -522,7 +415,108 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Верхняя часть - темно-зеленый фон
+              Container(
+                height: 68,
+                decoration: const BoxDecoration(
+                  color: Color(0xFF163832),
+                  borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(8),
+                    topRight: Radius.circular(8),
+                  ),
+                ),
+                alignment: Alignment.center,
+                padding: const EdgeInsets.symmetric(horizontal: 15),
+                child: const Text(
+                  'Вы действительно хотите выйти?',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w300,
+                    fontFamily: 'Montserrat',
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              Container(
+                height: 50,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.only(
+                    bottomLeft: Radius.circular(8),
+                    bottomRight: Radius.circular(8),
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () {
+                          Navigator.pop(context);
+                          Navigator.of(context).pushReplacementNamed('/auth');
+                        },
+                        child: const Center(
+                          child: Text(
+                            'Да',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Colors.black,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 91),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: const Center(
+                          child: Text(
+                            'Нет',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Jura',
+                              color: Color(0xFFBA1A1A),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation() {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 50),
+        child: Container(
+          constraints: const BoxConstraints(maxWidth: 293),
+          height: 118,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(8),
+            boxShadow: [
+              BoxShadow(
+                color: const Color(0x59000000),
+                offset: const Offset(0, 4),
+                blurRadius: 8,
+              ),
+            ],
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
               Container(
                 height: 68,
                 decoration: const BoxDecoration(
@@ -545,7 +539,6 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                   ),
                 ),
               ),
-              // Нижняя часть - белый фон с кнопками
               Container(
                 height: 50,
                 decoration: const BoxDecoration(
@@ -558,7 +551,6 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const SizedBox(width: 60),
                     Expanded(
                       child: GestureDetector(
                         onTap: () {
@@ -580,6 +572,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                         ),
                       ),
                     ),
+                    const SizedBox(width: 91),
                     Expanded(
                       child: GestureDetector(
                         onTap: () => Navigator.pop(context),
@@ -596,7 +589,6 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 60),
                   ],
                 ),
               ),

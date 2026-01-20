@@ -6,6 +6,7 @@ import '../../data/models/order_model.dart';
 import '../../data/services/mock_api_service.dart';
 import 'widgets/order_card.dart';
 import 'widgets/expanded_order_dialog.dart';
+import 'widgets/reservation_screens.dart';
 
 class FilterState {
   bool filterNearby;
@@ -45,6 +46,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   bool _isSearching = false;
   bool _isFilterOpen = false;
   FilterState _filterState = FilterState();
+  bool _hasCard = false; // Симуляция наличия карты
 
   final List<String> _categories = [
     'Все заведения',
@@ -164,12 +166,11 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     showDialog(
       context: context,
       barrierColor: Colors.transparent,
-      useSafeArea: false, // ВАЖНО: отключаем SafeArea для диалога
+      useSafeArea: false,
       builder: (dialogContext) {
         return Stack(
-          fit: StackFit.expand, // Растягиваем на весь экран
+          fit: StackFit.expand,
           children: [
-            // Размытие ВСЕГО экрана без SafeArea
             BackdropFilter(
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
@@ -177,7 +178,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                 child: Container(color: Colors.black.withOpacity(0.3)),
               ),
             ),
-            // Header поверх размытия (не размыт)
             Positioned(
               top: 0,
               left: 0,
@@ -201,7 +201,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                 ),
               ),
             ),
-            // Диалог карточки (не размыт)
             ExpandedOrderDialog(
               order: order,
               nameRestaurant: sellerInfo['nameRestaurant']!,
@@ -218,10 +217,38 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   }
 
   void _handleReserve(OrderModel order) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Заказ #${order.numberOrder} забронирован'),
-        backgroundColor: AppColors.success,
+    final sellerInfo = _getSellerInfo(order.idSeller);
+
+    if (!_hasCard) {
+      // Показываем экран "Карта не добавлена"
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (context) => NoCardScreen(
+            order: order,
+            onCardAdded: () {
+              // После добавления карты
+              setState(() => _hasCard = true);
+              _showPickupScreen(order, sellerInfo);
+            },
+          ),
+        ),
+      );
+    } else {
+      // Сразу показываем экран забрать заказ
+      _showPickupScreen(order, sellerInfo);
+    }
+  }
+
+  void _showPickupScreen(OrderModel order, Map<String, String> sellerInfo) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => PickupOrderScreen(
+          order: order,
+          nameRestaurant: sellerInfo['nameRestaurant']!,
+          address: sellerInfo['address']!,
+        ),
       ),
     );
   }
@@ -243,7 +270,6 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
           ),
           Column(
             children: [
-              // Header с динамическим скруглением
               Container(
                 decoration: BoxDecoration(
                   borderRadius: _isFilterOpen

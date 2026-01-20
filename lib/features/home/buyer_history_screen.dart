@@ -40,8 +40,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
   Future<void> _loadData() async {
     try {
       // Для теста - пустой список
-      final history =
-          <OrderHistoryModel>[]; // await _apiService.getUserOrderHistory(1);
+      final history = <OrderHistoryModel>[];
       setState(() {
         _historyOrders = history;
         _filteredOrders = history;
@@ -113,7 +112,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
               filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
               child: GestureDetector(
                 onTap: () => Navigator.pop(dialogContext),
-                child: Container(color: Colors.black.withOpacity(0.3)),
+                child: Container(color: Colors.white.withOpacity(0.3)),
               ),
             ),
             Positioned(
@@ -162,19 +161,25 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
           ),
           Column(
             children: [
-              SearchHeaderWidget(
-                searchController: _searchController,
-                isSearching: _isSearching,
-                onSearchToggle: _toggleSearch,
-                showFilter: false,
-                title: 'История покупок',
-              ),
               Expanded(
                 child: _isLoading
                     ? const Center(child: CircularProgressIndicator())
                     : _buildContent(),
               ),
             ],
+          ),
+          // Header всегда сверху и не размывается
+          Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: SearchHeaderWidget(
+              searchController: _searchController,
+              isSearching: _isSearching,
+              onSearchToggle: _toggleSearch,
+              showFilter: false,
+              title: 'История покупок',
+            ),
           ),
         ],
       ),
@@ -185,13 +190,16 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
     if (_filteredOrders.isEmpty) {
       return Stack(
         children: [
-          // Размытый фон
-          BackdropFilter(
-            filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-            child: Container(color: Colors.black.withOpacity(0.3)),
+          // Размытый светлый фон
+          Positioned.fill(
+            child: BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+              child: Container(color: Colors.white.withOpacity(0.3)),
+            ),
           ),
-          // Текст по центру без белого фона
-          Center(
+          // Текст строго по центру экрана
+          Align(
+            alignment: Alignment.center,
             child: const Text(
               'На данный момент история\nваших foodbox пуста',
               textAlign: TextAlign.center,

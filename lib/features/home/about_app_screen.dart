@@ -26,32 +26,36 @@ class AboutAppScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // Логотип
-                      Image.asset(
-                        'assets/images/logo.png',
-                        width: 200,
-                        height: 200,
-                        fit: BoxFit.contain,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const SizedBox(width: 200, height: 200);
-                        },
-                      ),
-                      const SizedBox(height: 10),
-
-                      // Версия
-                      const Text(
-                        'Версия 1.1',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.w400,
-                          fontFamily: 'Montserrat',
-                          color: Color(0xFF7FA29A),
+                      const Spacer(),
+                      // Логотип и версия по центру экрана
+                      Center(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Image.asset(
+                              'assets/images/logo.png',
+                              width: 200,
+                              height: 200,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return const SizedBox(width: 200, height: 200);
+                              },
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              'Версия 1.1',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.w400,
+                                fontFamily: 'Montserrat',
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                       const Spacer(),
-
                       // Ссылки внизу
                       _buildBottomLinks(),
                       const SizedBox(height: 40),
@@ -94,24 +98,20 @@ class AboutAppScreen extends StatelessWidget {
         Text(
           'Политика конфиденциальности',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             fontFamily: 'Montserrat',
             color: Colors.white,
-            decoration: TextDecoration.underline,
-            decorationColor: Colors.white,
           ),
         ),
         SizedBox(height: 15),
         Text(
           'Условия пользовательского соглашения',
           style: TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w400,
+            fontSize: 12,
+            fontWeight: FontWeight.w700,
             fontFamily: 'Montserrat',
             color: Colors.white,
-            decoration: TextDecoration.underline,
-            decorationColor: Colors.white,
           ),
         ),
       ],
