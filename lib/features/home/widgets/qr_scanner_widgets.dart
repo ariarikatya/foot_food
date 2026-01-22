@@ -1,17 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/models/order_model.dart';
+import '../../../core/widgets/custom_button.dart';
 
-/// Экран сканирования QR-кода (Выдать заказ 1)
+/// Экран сканирования QR-кода
 class QRScannerScreen extends StatefulWidget {
-  final OrderModel order;
-  final VoidCallback onScanSuccess;
-
-  const QRScannerScreen({
-    super.key,
-    required this.order,
-    required this.onScanSuccess,
-  });
+  const QRScannerScreen({super.key});
 
   @override
   State<QRScannerScreen> createState() => _QRScannerScreenState();
@@ -23,11 +17,22 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   void _startScanning() {
     setState(() => _isScanning = true);
 
-    // Симуляция успешного сканирования через 2 секунды
+    // Имитация сканирования
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        setState(() => _isScanning = false);
-        widget.onScanSuccess();
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const QRResultScreen(
+              orderNumber: '12345',
+              cookingTime: '12:30',
+              saleTime: '14:00',
+              description: 'Вкусный обед с салатом',
+              composition: 'Салат, паста, десерт',
+              price: 500,
+            ),
+          ),
+        );
       }
     });
   }
@@ -37,119 +42,101 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(),
-            Expanded(child: _buildScannerArea()),
-            _buildInstructions(),
-            const SizedBox(height: 20),
-            _buildScanButton(),
-            const SizedBox(height: 40),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close, color: AppColors.primary, size: 30),
-            onPressed: () => Navigator.pop(context),
-          ),
-          const Spacer(),
-          Text(
-            'Заказ #${widget.order.numberOrder}',
-            style: const TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          const Spacer(),
-          const SizedBox(width: 46),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildScannerArea() {
-    return Center(
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          // Прозрачная область сканирования
-          Container(
-            width: 250,
-            height: 250,
-            decoration: BoxDecoration(
-              border: Border.all(color: AppColors.primary, width: 3),
-              borderRadius: BorderRadius.circular(20),
-              color: Colors.transparent,
-            ),
-            child: _isScanning
-                ? const Center(
-                    child: CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(
-                        AppColors.primary,
-                      ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            children: [
+              // Иконка назад
+              Align(
+                alignment: Alignment.centerLeft,
+                child: GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: SvgPicture.asset(
+                    'assets/images/Vector.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
                     ),
-                  )
-                : const Icon(
-                    Icons.qr_code_scanner,
-                    size: 100,
-                    color: Colors.grey,
                   ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildInstructions() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Text(
-        'Отсканируйте QR-код\nпокупателя',
-        textAlign: TextAlign.center,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-          fontFamily: 'Montserrat',
-          color: AppColors.textPrimary,
-          decoration: TextDecoration.none,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildScanButton() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton(
-          onPressed: _isScanning ? null : _startScanning,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Сканировать',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Jura',
-              color: Colors.white,
-            ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Текст над сканером
+              const Text(
+                'Отсканируйте QR-код',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Область сканирования
+              Expanded(
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.grey[300],
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: AppColors.primary, width: 3),
+                  ),
+                  child: Center(
+                    child: _isScanning
+                        ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(
+                                color: AppColors.primary,
+                              ),
+                              SizedBox(height: 20),
+                              Text(
+                                'Сканирование...',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w400,
+                                  fontFamily: 'Montserrat',
+                                  color: AppColors.primary,
+                                ),
+                              ),
+                            ],
+                          )
+                        : Icon(
+                            Icons.qr_code_scanner,
+                            size: 100,
+                            color: Colors.grey[600],
+                          ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Кнопка Сканировать
+              CustomButton(
+                text: 'Сканировать',
+                fontSize: 28,
+                fontWeight: FontWeight.w500,
+                onPressed: _isScanning ? null : _startScanning,
+              ),
+              const SizedBox(height: 15),
+              // Кнопка Назад
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                style: TextButton.styleFrom(
+                  backgroundColor: Colors.transparent,
+                  padding: const EdgeInsets.symmetric(vertical: 15),
+                ),
+                child: const Text(
+                  'Назад',
+                  style: TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w400,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.primary,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -157,17 +144,23 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 }
 
-/// Экран подтверждения оплаты (Выдать заказ 2)
-class PaymentConfirmationScreen extends StatelessWidget {
-  final OrderModel order;
-  final String nameRestaurant;
-  final VoidCallback onPaymentConfirm;
+/// Экран результата сканирования QR-кода
+class QRResultScreen extends StatelessWidget {
+  final String orderNumber;
+  final String cookingTime;
+  final String saleTime;
+  final String description;
+  final String composition;
+  final double price;
 
-  const PaymentConfirmationScreen({
+  const QRResultScreen({
     super.key,
-    required this.order,
-    required this.nameRestaurant,
-    required this.onPaymentConfirm,
+    required this.orderNumber,
+    required this.cookingTime,
+    required this.saleTime,
+    required this.description,
+    required this.composition,
+    required this.price,
   });
 
   @override
@@ -175,118 +168,114 @@ class PaymentConfirmationScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            _buildHeader(context),
-            Expanded(child: _buildContent()),
-            _buildPaymentButton(context),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(
-              Icons.arrow_back,
-              color: AppColors.primary,
-              size: 30,
-            ),
-            onPressed: () => Navigator.pop(context),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 40),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(
-            'Номер заказа: ${order.numberOrder}',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          const SizedBox(height: 30),
-          Text(
-            'Номер брони: 221033803247',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          const SizedBox(height: 30),
-          Text(
-            'Номер заказа: 221',
-            style: const TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-              decoration: TextDecoration.none,
-            ),
-          ),
-          const SizedBox(height: 60),
-          Text(
-            '${order.price.toStringAsFixed(0)} ₽',
-            style: const TextStyle(
-              fontSize: 48,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-              decoration: TextDecoration.none,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPaymentButton(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(40, 20, 40, 40),
-      child: SizedBox(
-        width: double.infinity,
-        height: 56,
-        child: ElevatedButton(
-          onPressed: () {
-            Navigator.pop(context);
-            onPaymentConfirm();
-          },
-          style: ElevatedButton.styleFrom(
-            backgroundColor: AppColors.primary,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(30),
-            ),
-          ),
-          child: const Text(
-            'Провести оплату',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Jura',
-              color: Colors.white,
-              decoration: TextDecoration.none,
-            ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Иконка назад
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: SvgPicture.asset(
+                  'assets/images/Vector.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 40),
+              // Номер заказа
+              Text(
+                'Номер заказа: $orderNumber',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Информация о заказе
+              const Text(
+                'Информация о заказе:',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 15),
+              _buildInfoRow('Приготовлено:', cookingTime),
+              const SizedBox(height: 10),
+              _buildInfoRow('Выставлено на продажу:', saleTime),
+              const SizedBox(height: 10),
+              _buildInfoRow('Описание:', description),
+              const SizedBox(height: 10),
+              _buildInfoRow('Внутри:', composition),
+              const Spacer(),
+              // Цена
+              Center(
+                child: Text(
+                  '${price.toStringAsFixed(0)} ₽',
+                  style: const TextStyle(
+                    fontSize: 36,
+                    fontWeight: FontWeight.w600,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 30),
+              // Кнопка оплаты
+              CustomButton(
+                text: 'Провести оплату',
+                fontSize: 28,
+                fontWeight: FontWeight.w500,
+                onPressed: () {
+                  // Переход на seller_home_screen
+                  Navigator.of(
+                    context,
+                  ).pushNamedAndRemoveUntil('/seller_home', (route) => false);
+                },
+              ),
+              const SizedBox(height: 20),
+            ],
           ),
         ),
       ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w400,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w400,
+              fontFamily: 'Montserrat',
+              color: AppColors.textPrimary,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

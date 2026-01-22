@@ -7,6 +7,7 @@ import '../../data/services/mock_api_service.dart';
 import 'widgets/order_card.dart';
 import 'widgets/expanded_order_dialog.dart';
 import 'widgets/reservation_screens.dart';
+import 'add_card_screen.dart';
 
 class FilterState {
   bool filterNearby;
@@ -220,20 +221,16 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
     final sellerInfo = _getSellerInfo(order.idSeller);
 
     if (!_hasCard) {
-      // Показываем экран "Карта не добавлена"
+      // Показываем экран добавления карты
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => NoCardScreen(
-            order: order,
-            onCardAdded: () {
-              // После добавления карты
-              setState(() => _hasCard = true);
-              _showPickupScreen(order, sellerInfo);
-            },
-          ),
-        ),
-      );
+        MaterialPageRoute(builder: (context) => const AddCardScreen()),
+      ).then((result) {
+        if (result == true) {
+          setState(() => _hasCard = true);
+          _showPickupScreen(order, sellerInfo);
+        }
+      });
     } else {
       // Сразу показываем экран забрать заказ
       _showPickupScreen(order, sellerInfo);

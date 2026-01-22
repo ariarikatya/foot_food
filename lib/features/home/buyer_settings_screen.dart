@@ -5,7 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import 'about_app_screen.dart';
-import 'add_card_screen.dart';
+import 'widgets/add_card_dialog.dart';
 import '../onboarding/onboarding_screen.dart';
 
 /// Экран настроек покупателя (Экран 12)
@@ -227,7 +227,6 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
   void _showCitySelectionDialog() {
     final cities = ['Пермь', 'Казань', 'Сочи', 'Уфа'];
     final searchController = TextEditingController();
-    final scrollController = ScrollController();
 
     showDialog(
       context: context,
@@ -289,69 +288,43 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
                       ],
                     ),
                   ),
-                  // Список городов со скроллбаром
+                  // Список городов с ограничением высоты
                   Expanded(
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return NotificationListener<ScrollNotification>(
-                          onNotification: (notification) {
-                            setState(() {});
-                            return true;
-                          },
-                          child: Stack(
-                            children: [
-                              ListView(
-                                controller: scrollController,
-                                padding: EdgeInsets.zero,
-                                children: cities
-                                    .where(
-                                      (city) => city.toLowerCase().contains(
-                                        searchController.text.toLowerCase(),
-                                      ),
-                                    )
-                                    .map((city) {
-                                      return ListTile(
-                                        dense: true,
-                                        title: Text(
-                                          city,
-                                          style: const TextStyle(
-                                            fontSize: 18,
-                                            fontWeight: FontWeight.w400,
-                                            fontFamily: 'Montserrat',
-                                            color: Colors.black,
-                                          ),
-                                        ),
-                                        onTap: () {
-                                          this.setState(() {
-                                            _cityController.text = city;
-                                          });
-                                          Navigator.pop(context);
-                                        },
-                                      );
-                                    })
-                                    .toList(),
+                    child: ClipRRect(
+                      borderRadius: const BorderRadius.only(
+                        bottomLeft: Radius.circular(15),
+                        bottomRight: Radius.circular(15),
+                      ),
+                      child: ListView(
+                        padding: EdgeInsets.zero,
+                        children: cities
+                            .where(
+                              (city) => city.toLowerCase().contains(
+                                searchController.text.toLowerCase(),
                               ),
-                              // Динамический скроллбар - исправлен
-                              if (scrollController.hasClients &&
-                                  scrollController.position.maxScrollExtent > 0)
-                                Positioned(
-                                  right: 0,
-                                  top: 0,
-                                  child: Container(
-                                    height: constraints.maxHeight,
-                                    child: CustomPaint(
-                                      size: Size(4, constraints.maxHeight),
-                                      painter: _ScrollbarPainter(
-                                        scrollController: scrollController,
-                                        containerHeight: constraints.maxHeight,
-                                      ),
-                                    ),
+                            )
+                            .map((city) {
+                              return ListTile(
+                                dense: true,
+                                title: Text(
+                                  city,
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w400,
+                                    fontFamily: 'Montserrat',
+                                    color: Colors.black,
                                   ),
                                 ),
-                            ],
-                          ),
-                        );
-                      },
+                                onTap: () {
+                                  this.setState(() {
+                                    _cityController.text = city;
+                                  });
+                                  Navigator.pop(context);
+                                },
+                              );
+                            })
+                            .toList(),
+                      ),
                     ),
                   ),
                 ],
@@ -593,39 +566,4 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
       ),
     );
   }
-}
-
-class _ScrollbarPainter extends CustomPainter {
-  final ScrollController scrollController;
-  final double containerHeight;
-
-  _ScrollbarPainter({
-    required this.scrollController,
-    required this.containerHeight,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (!scrollController.hasClients) return;
-
-    final thumbHeight = 104.0;
-    final maxOffset = containerHeight - thumbHeight;
-    final scrollProgress =
-        scrollController.offset / scrollController.position.maxScrollExtent;
-    final thumbOffset = (scrollProgress * maxOffset).clamp(0.0, maxOffset);
-
-    final paint = Paint()
-      ..color = AppColors.primary
-      ..style = PaintingStyle.fill;
-
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, thumbOffset, 4, thumbHeight),
-      const Radius.circular(2),
-    );
-
-    canvas.drawRRect(rrect, paint);
-  }
-
-  @override
-  bool shouldRepaint(_ScrollbarPainter oldDelegate) => true;
 }

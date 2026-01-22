@@ -86,13 +86,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                         const SizedBox(height: AppSpacing.xl),
                         _buildInputField(),
                         const SizedBox(height: AppSpacing.xl),
-                        CustomButton(
-                          text: 'Отправить',
-                          fontSize: 28,
-                          fontWeight: FontWeight.w500,
-                          onPressed: _isLoading ? null : _handleRecovery,
-                          isLoading: _isLoading,
-                        ),
+                        _buildRecoverButton(),
                       ],
                     ),
                   ),
@@ -159,7 +153,7 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
         fontSize: 16,
         fontWeight: FontWeight.w300,
         fontFamily: 'Montserrat',
-        color: AppColors.textSecondary,
+        color: AppColors.textPrimary, // Изменен цвет на основной
       ),
     );
   }
@@ -175,6 +169,16 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
         }
         return null;
       },
+    );
+  }
+
+  Widget _buildRecoverButton() {
+    return CustomButton(
+      text: 'Отправить',
+      fontSize: 28,
+      fontWeight: FontWeight.w500,
+      onPressed: _isLoading ? null : _handleRecovery,
+      isLoading: _isLoading,
     );
   }
 }

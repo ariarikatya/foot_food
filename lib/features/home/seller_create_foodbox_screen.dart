@@ -163,13 +163,13 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
           ),
         ),
         Container(
-          constraints: const BoxConstraints(minHeight: 60),
+          height: 60, // Фиксированная высота как у других полей
           decoration: BoxDecoration(
             color: Colors.white.withOpacity(0.3),
             borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
             border: Border.all(color: AppColors.border, width: 2),
           ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Row(
             children: [
               const Text(

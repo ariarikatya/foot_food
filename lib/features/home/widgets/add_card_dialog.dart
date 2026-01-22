@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_text_field.dart';
 
 /// Диалог добавления карты (для использования в настройках)
 class AddCardDialog extends StatefulWidget {
@@ -33,7 +33,7 @@ class _AddCardDialogState extends State<AddCardDialog> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            widget.hasCard ? 'Карта изменена!' : 'Карта сохранена!',
+            widget.hasCard ? 'Карта изменена!' : 'Карта добавлена!',
           ),
           backgroundColor: AppColors.success,
         ),

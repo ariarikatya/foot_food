@@ -5,6 +5,7 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import 'seller_verification_screen.dart';
+import 'seller_edit_data_screen.dart';
 import 'about_app_screen.dart';
 
 /// Экран настроек продавца (Экран 8)
@@ -55,6 +56,19 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
     );
   }
 
+  void _editData() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerEditDataScreen(
+          nameRestaurant: _nameRestaurant,
+          email: _email,
+          address: _address,
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,8 +93,6 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildLogoSection(),
-                const SizedBox(height: 30),
                 _buildInfoCard(),
                 const SizedBox(height: 20),
                 if (_verificationStatus != 'approved')
@@ -107,8 +119,8 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
           width: 120,
           height: 120,
           decoration: BoxDecoration(
-            shape: BoxShape.circle,
             color: Colors.grey[300],
+            borderRadius: BorderRadius.circular(15),
             border: Border.all(color: const Color(0xFF10292A), width: 2),
           ),
           child: _logoPath.isNotEmpty
@@ -162,6 +174,36 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                // Логотип внутри карточки
+                Center(
+                  child: GestureDetector(
+                    onTap: _verificationStatus == 'approved' ? _pickLogo : null,
+                    child: Container(
+                      width: 120,
+                      height: 120,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        shape: BoxShape.circle,
+                        border: Border.all(
+                          color: const Color(0xFF10292A),
+                          width: 2,
+                        ),
+                      ),
+                      child: _logoPath.isNotEmpty
+                          ? const Icon(
+                              Icons.restaurant,
+                              size: 60,
+                              color: Colors.grey,
+                            )
+                          : const Icon(
+                              Icons.add_a_photo,
+                              size: 40,
+                              color: Colors.grey,
+                            ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
                 _buildInfoText('Название:', _nameRestaurant),
                 const SizedBox(height: 15),
                 _buildInfoText('Email:', _email),
@@ -173,23 +215,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
                   fontSize: 22,
                   fontWeight: FontWeight.w400,
                   isOutlined: true,
-                  onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text('Редактирование данных'),
-                        content: const Text(
-                          'Функция редактирования будет доступна позже',
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text('OK'),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
+                  onPressed: _editData,
                 ),
                 const SizedBox(height: 15),
                 CustomButton(
