@@ -4,7 +4,6 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
 import '../../core/widgets/custom_text_field.dart';
-import 'widgets/user_type_toggle.dart';
 
 class PasswordRecoveryScreen extends StatefulWidget {
   const PasswordRecoveryScreen({super.key});
@@ -15,17 +14,18 @@ class PasswordRecoveryScreen extends StatefulWidget {
 
 class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _emailController = TextEditingController();
-  final _phoneController = TextEditingController();
+  final _loginController = TextEditingController();
 
   bool _isLoading = false;
-  bool _isBuyer = true;
 
   @override
   void dispose() {
-    _emailController.dispose();
-    _phoneController.dispose();
+    _loginController.dispose();
     super.dispose();
+  }
+
+  bool _isEmail(String login) {
+    return login.contains('@');
   }
 
   Future<void> _handleRecovery() async {
@@ -35,10 +35,13 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
       await Future.delayed(const Duration(seconds: 2));
 
       if (mounted) {
+        final login = _loginController.text.trim();
+        final isBuyer = !_isEmail(login);
+
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(
-              _isBuyer
+              isBuyer
                   ? 'Инструкции отправлены на ваш номер'
                   : 'Инструкции отправлены на вашу почту',
             ),
@@ -80,12 +83,6 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
                         _buildHeader(),
                         const SizedBox(height: AppSpacing.md),
                         _buildDescription(),
-                        const SizedBox(height: AppSpacing.md),
-                        UserTypeToggle(
-                          isBuyer: _isBuyer,
-                          onBuyerTap: () => setState(() => _isBuyer = true),
-                          onSellerTap: () => setState(() => _isBuyer = false),
-                        ),
                         const SizedBox(height: AppSpacing.xl),
                         _buildInputField(),
                         const SizedBox(height: AppSpacing.xl),
@@ -156,11 +153,9 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   }
 
   Widget _buildDescription() {
-    return Text(
-      _isBuyer
-          ? 'Введите номер телефона, и мы отправим инструкции по восстановлению пароля'
-          : 'Введите email, и мы отправим инструкции по восстановлению пароля',
-      style: const TextStyle(
+    return const Text(
+      'Введите логин, и мы отправим инструкции по восстановлению пароля',
+      style: TextStyle(
         fontSize: 16,
         fontWeight: FontWeight.w300,
         fontFamily: 'Montserrat',
@@ -170,33 +165,16 @@ class _PasswordRecoveryScreenState extends State<PasswordRecoveryScreen> {
   }
 
   Widget _buildInputField() {
-    if (_isBuyer) {
-      return CustomTextField(
-        controller: _phoneController,
-        hintText: 'Номер телефона',
-        keyboardType: TextInputType.phone,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Введите номер телефона';
-          }
-          return null;
-        },
-      );
-    } else {
-      return CustomTextField(
-        controller: _emailController,
-        hintText: 'Email',
-        keyboardType: TextInputType.emailAddress,
-        validator: (value) {
-          if (value == null || value.isEmpty) {
-            return 'Введите email';
-          }
-          if (!value.contains('@')) {
-            return 'Неверный формат email';
-          }
-          return null;
-        },
-      );
-    }
+    return CustomTextField(
+      controller: _loginController,
+      hintText: 'Логин',
+      keyboardType: TextInputType.text,
+      validator: (value) {
+        if (value == null || value.isEmpty) {
+          return 'Введите логин';
+        }
+        return null;
+      },
+    );
   }
 }

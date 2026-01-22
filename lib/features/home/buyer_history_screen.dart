@@ -121,15 +121,44 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
               right: 0,
               child: Material(
                 type: MaterialType.transparency,
-                child: SearchHeaderWidget(
-                  searchController: _searchController,
-                  isSearching: _isSearching,
-                  onSearchToggle: () {
-                    Navigator.pop(dialogContext);
-                    _toggleSearch();
-                  },
-                  showFilter: false,
-                  title: 'История покупок',
+                child: Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary,
+                    borderRadius: const BorderRadius.only(
+                      bottomLeft: Radius.circular(10),
+                      bottomRight: Radius.circular(10),
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0x59000000),
+                        offset: const Offset(0, 6),
+                        blurRadius: 12,
+                      ),
+                    ],
+                  ),
+                  child: SafeArea(
+                    bottom: false,
+                    child: Padding(
+                      padding: const EdgeInsets.only(
+                        top: 5,
+                        bottom: 17,
+                        left: 31,
+                        right: 31,
+                      ),
+                      child: const Text(
+                        'История покупок',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w400,
+                          fontFamily: 'Montserrat',
+                          color: Colors.white,
+                          decoration: TextDecoration.none,
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -173,12 +202,43 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: SearchHeaderWidget(
-              searchController: _searchController,
-              isSearching: _isSearching,
-              onSearchToggle: _toggleSearch,
-              showFilter: false,
-              title: 'История покупок',
+            child: Container(
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: AppColors.primary,
+                borderRadius: const BorderRadius.only(
+                  bottomLeft: Radius.circular(10),
+                  bottomRight: Radius.circular(10),
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0x59000000),
+                    offset: const Offset(0, 6),
+                    blurRadius: 12,
+                  ),
+                ],
+              ),
+              child: SafeArea(
+                bottom: false,
+                child: Padding(
+                  padding: const EdgeInsets.only(
+                    top: 5,
+                    bottom: 17,
+                    left: 31,
+                    right: 31,
+                  ),
+                  child: const Text(
+                    'История покупок',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w400,
+                      fontFamily: 'Montserrat',
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
             ),
           ),
         ],
@@ -216,7 +276,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.only(top: 40),
+      padding: const EdgeInsets.only(top: 80),
       itemCount: _filteredOrders.length,
       itemBuilder: (context, index) {
         final historyOrder = _filteredOrders[index];

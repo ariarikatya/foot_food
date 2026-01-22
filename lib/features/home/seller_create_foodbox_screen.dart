@@ -155,42 +155,44 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
   }
 
   Widget _buildCompositionToggle() {
-    return Container(
-      height: 60,
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(30),
-        border: Border.all(color: AppColors.border, width: 2),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0x4D051F20),
-            offset: const Offset(4, 8),
-            blurRadius: 12,
+    return Stack(
+      children: [
+        Positioned.fill(
+          child: CustomPaint(
+            painter: _OuterShadowPainter(radius: AppSpacing.radiusLg),
           ),
-        ],
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      child: Row(
-        children: [
-          const Text(
-            'Состав',
-            style: TextStyle(
-              fontSize: 22,
-              fontWeight: FontWeight.w400,
-              fontFamily: 'Montserrat',
-              color: Color(0xFF1A1C1B),
-            ),
+        ),
+        Container(
+          constraints: const BoxConstraints(minHeight: 60),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.3),
+            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
+            border: Border.all(color: AppColors.border, width: 2),
           ),
-          const Spacer(),
-          Switch(
-            value: _compositionEnabled,
-            onChanged: (value) {
-              setState(() => _compositionEnabled = value);
-            },
-            activeColor: AppColors.primary,
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          child: Row(
+            children: [
+              const Text(
+                'Состав',
+                style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w400,
+                  fontFamily: 'Montserrat',
+                  color: Color(0xFF1A1C1B),
+                ),
+              ),
+              const Spacer(),
+              Switch(
+                value: _compositionEnabled,
+                onChanged: (value) {
+                  setState(() => _compositionEnabled = value);
+                },
+                activeColor: AppColors.primary,
+              ),
+            ],
           ),
-        ],
-      ),
+        ),
+      ],
     );
   }
 
@@ -273,4 +275,42 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
       onPressed: _createFoodbox,
     );
   }
+}
+
+class _OuterShadowPainter extends CustomPainter {
+  final double radius;
+
+  _OuterShadowPainter({required this.radius});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rrect = RRect.fromRectAndRadius(
+      Rect.fromLTWH(0, 0, size.width, size.height),
+      Radius.circular(radius),
+    );
+
+    canvas.saveLayer(
+      Rect.fromLTWH(-50, -50, size.width + 100, size.height + 100),
+      Paint(),
+    );
+
+    final shadowPaint = Paint()
+      ..color = const Color(0x4D051F20)
+      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12 / 2);
+
+    canvas.translate(4, 8);
+    canvas.drawRRect(rrect, shadowPaint);
+    canvas.translate(-4, -8);
+
+    final cutPaint = Paint()
+      ..blendMode = BlendMode.dstOut
+      ..color = Colors.black;
+
+    canvas.drawRRect(rrect, cutPaint);
+
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

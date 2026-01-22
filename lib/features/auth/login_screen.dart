@@ -4,9 +4,8 @@ import '../../core/constants/app_colors.dart';
 import '../../core/constants/app_text_styles.dart';
 import '../../core/constants/app_spacing.dart';
 import '../../core/widgets/custom_button.dart';
+import '../../core/widgets/custom_text_field.dart';
 import '../../data/services/mock_api_service.dart';
-import 'widgets/login_form.dart';
-import 'widgets/user_type_toggle.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -23,7 +22,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   bool _obscurePassword = true;
   bool _isLoading = false;
-  bool _isBuyer = true;
 
   @override
   void dispose() {
@@ -32,14 +30,21 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
+  bool _isEmail(String login) {
+    return login.contains('@');
+  }
+
   Future<void> _handleLogin() async {
     if (_formKey.currentState?.validate() ?? false) {
       setState(() => _isLoading = true);
 
       try {
-        if (_isBuyer) {
+        final login = _loginController.text.trim();
+        final isBuyer = !_isEmail(login);
+
+        if (isBuyer) {
           await _apiService.loginUser(
-            phone: _loginController.text,
+            phone: login,
             password: _passwordController.text,
           );
           if (mounted) {
@@ -47,7 +52,7 @@ class _LoginScreenState extends State<LoginScreen> {
           }
         } else {
           await _apiService.loginSeller(
-            email: _loginController.text,
+            email: login,
             password: _passwordController.text,
           );
           if (mounted) {
@@ -97,22 +102,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         const SizedBox(height: AppSpacing.xl),
                         _buildHeader(),
-                        const SizedBox(height: AppSpacing.md),
-                        UserTypeToggle(
-                          isBuyer: _isBuyer,
-                          onBuyerTap: () => setState(() => _isBuyer = true),
-                          onSellerTap: () => setState(() => _isBuyer = false),
-                        ),
                         const SizedBox(height: AppSpacing.xl),
-                        LoginForm(
-                          loginController: _loginController,
-                          passwordController: _passwordController,
-                          isBuyer: _isBuyer,
-                          obscurePassword: _obscurePassword,
-                          onTogglePassword: () => setState(
-                            () => _obscurePassword = !_obscurePassword,
-                          ),
-                        ),
+                        _buildLoginForm(),
                         const SizedBox(height: AppSpacing.sm),
                         _buildForgotPassword(),
                         const SizedBox(height: AppSpacing.xl),
@@ -174,14 +165,54 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Widget _buildHeader() {
-    return Text(
-      _isBuyer ? 'Авторизация покупателя' : 'Авторизация продавца',
-      style: const TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w300,
-        fontFamily: 'Montserrat',
-        color: AppColors.textPrimary,
+    return const Center(
+      child: Text(
+        'Авторизация',
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w300,
+          fontFamily: 'Montserrat',
+          color: AppColors.textPrimary,
+        ),
       ),
+    );
+  }
+
+  Widget _buildLoginForm() {
+    return Column(
+      children: [
+        CustomTextField(
+          controller: _loginController,
+          hintText: 'Логин',
+          keyboardType: TextInputType.text,
+          validator: (v) {
+            if (v == null || v.isEmpty) {
+              return 'Введите логин';
+            }
+            return null;
+          },
+        ),
+        const SizedBox(height: AppSpacing.md),
+        CustomTextField(
+          controller: _passwordController,
+          hintText: 'Пароль',
+          obscureText: _obscurePassword,
+          validator: (v) {
+            if (v == null || v.isEmpty) {
+              return 'Введите пароль';
+            }
+            return null;
+          },
+          suffixIcon: IconButton(
+            icon: Icon(
+              _obscurePassword ? Icons.visibility_off : Icons.visibility,
+              color: AppColors.textSecondary,
+            ),
+            onPressed: () =>
+                setState(() => _obscurePassword = !_obscurePassword),
+          ),
+        ),
+      ],
     );
   }
 

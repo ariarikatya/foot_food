@@ -23,7 +23,7 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   String _email = 'insdfnsdf@mail.ru';
   String _address = 'Пермь, ул. Монастырская 57';
 
-  String _verificationStatus = 'pending'; // pending, approved, rejected
+  String _verificationStatus = 'rejected'; // pending, approved, rejected
 
   Future<void> _pickLogo() async {
     try {
@@ -74,24 +74,17 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
               left: AppSpacing.lg,
               right: AppSpacing.lg,
               top: 20,
-              bottom: 180 + 49, // Высота навигации + отступ
+              bottom: 180 + 49,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildLogoSection(),
                 const SizedBox(height: 30),
-                _buildInfoText('Название:', _nameRestaurant),
-                const SizedBox(height: 15),
-                _buildInfoText('Email:', _email),
-                const SizedBox(height: 15),
-                _buildInfoText('Адрес:', _address),
-                const SizedBox(height: 30),
-                _buildChangeDataButton(),
-                const SizedBox(height: 15),
-                _buildChangePasswordButton(),
-                const SizedBox(height: 30),
-                _buildVerificationSection(),
+                _buildInfoCard(),
+                const SizedBox(height: 20),
+                if (_verificationStatus != 'approved')
+                  _buildVerificationButton(),
                 const SizedBox(height: 40),
                 _buildAboutSection(),
                 const SizedBox(height: 20),
@@ -107,36 +100,112 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
   }
 
   Widget _buildLogoSection() {
-    return Column(
-      children: [
-        const Text(
-          'Пройдите верификацию чтобы добавить фото',
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w300,
-            fontFamily: 'Montserrat',
-            color: AppColors.textSecondary,
+    return Center(
+      child: GestureDetector(
+        onTap: _verificationStatus == 'approved' ? _pickLogo : null,
+        child: Container(
+          width: 120,
+          height: 120,
+          decoration: BoxDecoration(
+            shape: BoxShape.circle,
+            color: Colors.grey[300],
+            border: Border.all(color: const Color(0xFF10292A), width: 2),
           ),
+          child: _logoPath.isNotEmpty
+              ? const Icon(Icons.restaurant, size: 60, color: Colors.grey)
+              : const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
         ),
-        const SizedBox(height: 15),
-        Center(
-          child: GestureDetector(
-            onTap: _verificationStatus == 'approved' ? _pickLogo : null,
-            child: Container(
-              width: 120,
-              height: 120,
+      ),
+    );
+  }
+
+  Widget _buildInfoCard() {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0x1A000000),
+            offset: const Offset(0, 2),
+            blurRadius: 8,
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (_verificationStatus != 'approved')
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(15),
               decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: Colors.grey[300],
-                border: Border.all(color: const Color(0xFF10292A), width: 2),
+                color: AppColors.primary,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(15),
+                  topRight: Radius.circular(15),
+                ),
               ),
-              child: _logoPath.isNotEmpty
-                  ? const Icon(Icons.restaurant, size: 60, color: Colors.grey)
-                  : const Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+              child: const Text(
+                'Пройдите верификацию\nчтобы добавить фото',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'Montserrat',
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildInfoText('Название:', _nameRestaurant),
+                const SizedBox(height: 15),
+                _buildInfoText('Email:', _email),
+                const SizedBox(height: 15),
+                _buildInfoText('Адрес:', _address),
+                const SizedBox(height: 20),
+                CustomButton(
+                  text: 'Изменить данные',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w400,
+                  isOutlined: true,
+                  onPressed: () {
+                    showDialog(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text('Редактирование данных'),
+                        content: const Text(
+                          'Функция редактирования будет доступна позже',
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context),
+                            child: const Text('OK'),
+                          ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+                const SizedBox(height: 15),
+                CustomButton(
+                  text: 'Изменить пароль',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w400,
+                  isOutlined: true,
+                  onPressed: () {
+                    Navigator.of(context).pushNamed('/password_recovery');
+                  },
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+        ],
+      ),
     );
   }
 
@@ -167,126 +236,12 @@ class _SellerSettingsScreenState extends State<SellerSettingsScreen> {
     );
   }
 
-  Widget _buildChangeDataButton() {
+  Widget _buildVerificationButton() {
     return CustomButton(
-      text: 'Изменить данные',
+      text: 'Пройти верификацию',
       fontSize: 22,
       fontWeight: FontWeight.w400,
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Редактирование данных'),
-            content: const Text('Функция редактирования будет доступна позже'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('OK'),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildChangePasswordButton() {
-    return CustomButton(
-      text: 'Изменить пароль',
-      fontSize: 22,
-      fontWeight: FontWeight.w400,
-      onPressed: () {
-        Navigator.of(context).pushNamed('/password_recovery');
-      },
-    );
-  }
-
-  Widget _buildVerificationSection() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.3),
-        borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        border: Border.all(color: AppColors.border, width: 2),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              const Text(
-                'Статус верификации:',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Montserrat',
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const SizedBox(width: 10),
-              _buildStatusBadge(),
-            ],
-          ),
-          if (_verificationStatus == 'pending') ...[
-            const SizedBox(height: 15),
-            const Text(
-              'Ваша заявка на рассмотрении',
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w300,
-                fontFamily: 'Montserrat',
-                color: AppColors.textSecondary,
-              ),
-            ),
-          ],
-          if (_verificationStatus == 'rejected') ...[
-            const SizedBox(height: 15),
-            CustomButton(
-              text: 'Пройти верификацию',
-              fontSize: 18,
-              fontWeight: FontWeight.w400,
-              onPressed: _startVerification,
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStatusBadge() {
-    Color badgeColor;
-    String badgeText;
-
-    switch (_verificationStatus) {
-      case 'approved':
-        badgeColor = AppColors.success;
-        badgeText = 'Верифицирован';
-        break;
-      case 'pending':
-        badgeColor = AppColors.warning;
-        badgeText = 'На проверке';
-        break;
-      case 'rejected':
-      default:
-        badgeColor = AppColors.error;
-        badgeText = 'Не верифицирован';
-    }
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      decoration: BoxDecoration(
-        color: badgeColor,
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        badgeText,
-        style: const TextStyle(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          fontFamily: 'Montserrat',
-          color: Colors.white,
-        ),
-      ),
+      onPressed: _startVerification,
     );
   }
 
