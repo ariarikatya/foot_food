@@ -1,24 +1,23 @@
+// ===== 1. add_card_screen.dart =====
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/widgets/custom_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_button.dart';
 
-/// Диалог добавления карты (для использования в настройках)
-class AddCardDialog extends StatefulWidget {
-  final bool hasCard;
-  final VoidCallback? onSuccess;
-
-  const AddCardDialog({super.key, this.hasCard = false, this.onSuccess});
+class AddCardScreen extends StatefulWidget {
+  const AddCardScreen({super.key});
 
   @override
-  State<AddCardDialog> createState() => _AddCardDialogState();
+  State<AddCardScreen> createState() => _AddCardScreenState();
 }
 
-class _AddCardDialogState extends State<AddCardDialog> {
+class _AddCardScreenState extends State<AddCardScreen> {
   final _formKey = GlobalKey<FormState>();
   final _cardNumberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvcController = TextEditingController();
+  bool _saveCard = false;
 
   @override
   void dispose() {
@@ -28,174 +27,220 @@ class _AddCardDialogState extends State<AddCardDialog> {
     super.dispose();
   }
 
-  Future<void> _addCard() async {
+  void _addCard() {
     if (_formKey.currentState?.validate() ?? false) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(
-            widget.hasCard ? 'Карта изменена!' : 'Карта сохранена!',
-          ),
-          backgroundColor: AppColors.success,
-        ),
-      );
-
-      if (widget.onSuccess != null) {
-        widget.onSuccess!();
-      } else {
-        Navigator.pop(context);
-      }
+      Navigator.pop(context);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-      child: Container(
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x59051F20),
-              offset: const Offset(4, 8),
-              blurRadius: 12,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              padding: const EdgeInsets.fromLTRB(20, 20, 20, 20),
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(15),
-                  topRight: Radius.circular(15),
-                ),
-              ),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        GestureDetector(
-                          onTap: () => Navigator.pop(context),
-                          child: const Icon(
-                            Icons.close,
-                            color: AppColors.textPrimary,
-                            size: 24,
-                          ),
-                        ),
-                      ],
+    return Scaffold(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: SvgPicture.asset(
+                    'assets/images/Vector.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
                     ),
-                    const SizedBox(height: 10),
-                    _buildCardNumberField(),
-                    const SizedBox(height: 15),
-                    Row(
-                      children: [
-                        Expanded(child: _buildExpiryField()),
-                        const SizedBox(width: 15),
-                        Expanded(child: _buildCVCField()),
-                      ],
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Добавить карту',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Поле номера карты - БЕЗ ТЕНИ
+                TextFormField(
+                  controller: _cardNumberController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(16),
+                    _CardNumberFormatter(),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Номер карты',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Montserrat',
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Введите номер карты';
+                    }
+                    if (value.replaceAll(' ', '').length < 16) {
+                      return 'Введите корректный номер карты';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 30),
+                Row(
+                  children: [
+                    // Срок действия - БЕЗ ТЕНИ
+                    Expanded(
+                      child: TextFormField(
+                        controller: _expiryController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                          _ExpiryDateFormatter(),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: 'ММ/ГГ',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите срок';
+                          }
+                          if (value.length < 5) {
+                            return 'Некорректно';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // CVC - БЕЗ ТЕНИ
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cvcController,
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: 'CVC',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите CVC';
+                          }
+                          if (value.length < 3) {
+                            return 'Некорректно';
+                          }
+                          return null;
+                        },
+                      ),
                     ),
                   ],
                 ),
-              ),
-            ),
-            Container(
-              height: 50,
-              decoration: const BoxDecoration(
-                color: AppColors.primary,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(15),
-                  bottomRight: Radius.circular(15),
-                ),
-              ),
-              child: Material(
-                color: Colors.transparent,
-                child: InkWell(
-                  onTap: _addCard,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(15),
-                    bottomRight: Radius.circular(15),
-                  ),
-                  child: Center(
-                    child: Text(
-                      widget.hasCard ? 'Изменить' : 'Добавить',
-                      style: const TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Jura',
-                        color: Colors.white,
+                const SizedBox(height: 30),
+                // Слайдер - цвет основной
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Запомнить карту',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Montserrat',
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
+                    Switch(
+                      value: _saveCard,
+                      onChanged: (value) {
+                        setState(() {
+                          _saveCard = value;
+                        });
+                      },
+                      activeColor: Colors.white,
+                      activeTrackColor: AppColors.primary,
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: Colors.grey[300],
+                    ),
+                  ],
                 ),
-              ),
+                const SizedBox(height: 30),
+                CustomButton(
+                  text: 'Добавить',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  onPressed: _addCard,
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    );
-  }
-
-  Widget _buildCardNumberField() {
-    return CustomTextField(
-      controller: _cardNumberController,
-      hintText: 'Номер карты',
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(16),
-        _CardNumberFormatter(),
-      ],
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Введите номер карты';
-        final digitsOnly = v.replaceAll(' ', '');
-        if (digitsOnly.length != 16) return 'Неверный номер карты';
-        return null;
-      },
-    );
-  }
-
-  Widget _buildExpiryField() {
-    return CustomTextField(
-      controller: _expiryController,
-      hintText: 'Срок действия',
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(4),
-        _ExpiryDateFormatter(),
-      ],
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Введите срок';
-        if (v.length != 5) return 'ММ/ГГ';
-        return null;
-      },
-    );
-  }
-
-  Widget _buildCVCField() {
-    return CustomTextField(
-      controller: _cvcController,
-      hintText: 'CVC',
-      keyboardType: TextInputType.number,
-      inputFormatters: [
-        FilteringTextInputFormatter.digitsOnly,
-        LengthLimitingTextInputFormatter(3),
-      ],
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'CVC';
-        if (v.length != 3) return 'CVC';
-        return null;
-      },
     );
   }
 }
@@ -208,18 +253,15 @@ class _CardNumberFormatter extends TextInputFormatter {
   ) {
     final text = newValue.text.replaceAll(' ', '');
     final buffer = StringBuffer();
-
     for (int i = 0; i < text.length; i++) {
       buffer.write(text[i]);
       if ((i + 1) % 4 == 0 && i + 1 != text.length) {
         buffer.write(' ');
       }
     }
-
-    final formatted = buffer.toString();
     return TextEditingValue(
-      text: formatted,
-      selection: TextSelection.collapsed(offset: formatted.length),
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
     );
   }
 }
@@ -231,15 +273,12 @@ class _ExpiryDateFormatter extends TextInputFormatter {
     TextEditingValue newValue,
   ) {
     final text = newValue.text;
-
-    if (text.length > 2 && !text.contains('/')) {
-      final formatted = '${text.substring(0, 2)}/${text.substring(2)}';
-      return TextEditingValue(
-        text: formatted,
-        selection: TextSelection.collapsed(offset: formatted.length),
-      );
+    if (text.length <= 2) {
+      return newValue;
     }
-
-    return newValue;
+    return TextEditingValue(
+      text: '${text.substring(0, 2)}/${text.substring(2)}',
+      selection: TextSelection.collapsed(offset: text.length + 1),
+    );
   }
 }

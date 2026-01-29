@@ -2,10 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../data/models/order_model.dart';
 
 /// Экран сканирования QR-кода
 class QRScannerScreen extends StatefulWidget {
-  const QRScannerScreen({super.key});
+  final OrderModel order;
+  final VoidCallback onScanSuccess;
+
+  const QRScannerScreen({
+    super.key,
+    required this.order,
+    required this.onScanSuccess,
+  });
 
   @override
   State<QRScannerScreen> createState() => _QRScannerScreenState();
@@ -20,19 +28,7 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
     // Имитация сканирования
     Future.delayed(const Duration(seconds: 2), () {
       if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const QRResultScreen(
-              orderNumber: '12345',
-              cookingTime: '12:30',
-              saleTime: '14:00',
-              description: 'Вкусный обед с салатом',
-              composition: 'Салат, паста, десерт',
-              price: 500,
-            ),
-          ),
-        );
+        widget.onScanSuccess();
       }
     });
   }
@@ -46,7 +42,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           padding: const EdgeInsets.all(20),
           child: Column(
             children: [
-              // Иконка назад
               Align(
                 alignment: Alignment.centerLeft,
                 child: GestureDetector(
@@ -63,7 +58,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-              // Текст над сканером
               const Text(
                 'Отсканируйте QR-код',
                 style: TextStyle(
@@ -74,7 +68,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Область сканирования
               Expanded(
                 child: Container(
                   decoration: BoxDecoration(
@@ -111,7 +104,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 ),
               ),
               const SizedBox(height: 30),
-              // Кнопка Сканировать
               CustomButton(
                 text: 'Сканировать',
                 fontSize: 28,
@@ -119,7 +111,6 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
                 onPressed: _isScanning ? null : _startScanning,
               ),
               const SizedBox(height: 15),
-              // Кнопка Назад
               TextButton(
                 onPressed: () => Navigator.pop(context),
                 style: TextButton.styleFrom(
@@ -144,24 +135,23 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
   }
 }
 
-/// Экран результата сканирования QR-кода
-class QRResultScreen extends StatelessWidget {
-  final String orderNumber;
-  final String cookingTime;
-  final String saleTime;
-  final String description;
-  final String composition;
-  final double price;
+/// Экран подтверждения оплаты
+class PaymentConfirmationScreen extends StatelessWidget {
+  final OrderModel order;
+  final String nameRestaurant;
+  final VoidCallback onPaymentConfirm;
 
-  const QRResultScreen({
+  const PaymentConfirmationScreen({
     super.key,
-    required this.orderNumber,
-    required this.cookingTime,
-    required this.saleTime,
-    required this.description,
-    required this.composition,
-    required this.price,
+    required this.order,
+    required this.nameRestaurant,
+    required this.onPaymentConfirm,
   });
+
+  String _formatTime(DateTime? time) {
+    if (time == null) return '';
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -173,7 +163,6 @@ class QRResultScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Иконка назад
               GestureDetector(
                 onTap: () => Navigator.pop(context),
                 child: SvgPicture.asset(
@@ -187,9 +176,8 @@ class QRResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 40),
-              // Номер заказа
               Text(
-                'Номер заказа: $orderNumber',
+                'Номер заказа: ${order.numberOrder}',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w500,
@@ -198,7 +186,6 @@ class QRResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // Информация о заказе
               const Text(
                 'Информация о заказе:',
                 style: TextStyle(
@@ -209,18 +196,20 @@ class QRResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 15),
-              _buildInfoRow('Приготовлено:', cookingTime),
+              _buildInfoRow('Приготовлено:', _formatTime(order.cookingTime)),
               const SizedBox(height: 10),
-              _buildInfoRow('Выставлено на продажу:', saleTime),
+              _buildInfoRow(
+                'Выставлено на продажу:',
+                _formatTime(order.saleTime),
+              ),
               const SizedBox(height: 10),
-              _buildInfoRow('Описание:', description),
+              _buildInfoRow('Описание:', order.description ?? 'Нет описания'),
               const SizedBox(height: 10),
-              _buildInfoRow('Внутри:', composition),
+              _buildInfoRow('Внутри:', order.compositionOrder ?? 'Не указано'),
               const Spacer(),
-              // Цена
               Center(
                 child: Text(
-                  '${price.toStringAsFixed(0)} ₽',
+                  '${order.price.toStringAsFixed(0)} ₽',
                   style: const TextStyle(
                     fontSize: 36,
                     fontWeight: FontWeight.w600,
@@ -230,17 +219,11 @@ class QRResultScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 30),
-              // Кнопка оплаты
               CustomButton(
                 text: 'Провести оплату',
                 fontSize: 28,
                 fontWeight: FontWeight.w500,
-                onPressed: () {
-                  // Переход на seller_home_screen
-                  Navigator.of(
-                    context,
-                  ).pushNamedAndRemoveUntil('/seller_home', (route) => false);
-                },
+                onPressed: onPaymentConfirm,
               ),
               const SizedBox(height: 20),
             ],

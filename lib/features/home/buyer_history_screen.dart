@@ -1,13 +1,8 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/widgets/search_header_widget.dart';
-import '../../data/models/order_history_model.dart';
-import '../../data/services/mock_api_service.dart';
-import '../home/widgets/order_card.dart';
-import '../../data/models/order_model.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../data/models/order_model.dart';
 
-/// Экран истории заказов покупателя (Экран 11)
 class BuyerHistoryScreen extends StatefulWidget {
   const BuyerHistoryScreen({super.key});
 
@@ -16,733 +11,208 @@ class BuyerHistoryScreen extends StatefulWidget {
 }
 
 class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
-  final _apiService = MockApiService();
-  final _searchController = TextEditingController();
+  // Моковые данные для проверки
+  final List<Map<String, dynamic>> _mockOrders = [
+    {
+      'id': 1,
+      'idSeller': 1,
+      'numberOrder': 12345,
+      'restaurantName': 'Burger King',
+      'description': 'Воппер комбо с картофелем фри',
+      'compositionOrder': 'Бургер, картофель, напиток',
+      'price': 450.0,
+      'numberReservation': 1,
+      'cookingTime': DateTime.now().subtract(const Duration(hours: 2)),
+      'saleTime': DateTime.now().subtract(const Duration(hours: 1)),
+    },
+    {
+      'id': 2,
+      'idSeller': 1,
+      'numberOrder': 12346,
+      'restaurantName': 'KFC',
+      'description': 'Баскет с крыльями',
+      'compositionOrder': '8 крыльев, соус',
+      'price': 380.0,
+      'numberReservation': 2,
+      'cookingTime': DateTime.now().subtract(const Duration(days: 1)),
+      'saleTime': DateTime.now().subtract(const Duration(days: 1)),
+    },
+    {
+      'id': 3,
+      'idSeller': 1,
+      'numberOrder': 12347,
+      'restaurantName': 'Subway',
+      'description': 'Сэндвич с курицей',
+      'compositionOrder': 'Сэндвич 30см, напиток',
+      'price': 320.0,
+      'numberReservation': 3,
+      'cookingTime': DateTime.now().subtract(const Duration(days: 2)),
+      'saleTime': DateTime.now().subtract(const Duration(days: 2)),
+    },
+    {
+      'id': 4,
+      'idSeller': 1,
+      'numberOrder': 12348,
+      'restaurantName': 'Додо Пицца',
+      'description': 'Пепперони большая',
+      'compositionOrder': 'Пицца 35см',
+      'price': 599.0,
+      'numberReservation': 4,
+      'cookingTime': DateTime.now().subtract(const Duration(days: 3)),
+      'saleTime': DateTime.now().subtract(const Duration(days: 3)),
+    },
+  ];
 
-  List<OrderHistoryModel> _historyOrders = [];
-  List<OrderHistoryModel> _filteredOrders = [];
-  bool _isLoading = true;
-  bool _isSearching = false;
-  bool _isFilterOpen = false;
-
-  @override
-  void initState() {
-    super.initState();
-    _loadData();
-    _searchController.addListener(_filterOrders);
+  String _formatDate(DateTime? date) {
+    if (date == null) return '';
+    return '${date.day.toString().padLeft(2, '0')}.${date.month.toString().padLeft(2, '0')}.${date.year}';
   }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _loadData() async {
-    try {
-      // Для теста - пустой список
-      final history = <OrderHistoryModel>[];
-      setState(() {
-        _historyOrders = history;
-        _filteredOrders = history;
-        _isLoading = false;
-      });
-    } catch (e) {
-      setState(() => _isLoading = false);
-    }
-  }
-
-  void _filterOrders() {
-    final query = _searchController.text.toLowerCase();
-    setState(() {
-      if (query.isEmpty) {
-        _filteredOrders = _historyOrders;
-      } else {
-        _filteredOrders = _historyOrders.where((order) {
-          final sellerInfo = _getSellerInfo(order.idSeller);
-          final name = sellerInfo['nameRestaurant']!.toLowerCase();
-          final address = sellerInfo['address']!.toLowerCase();
-          return name.contains(query) || address.contains(query);
-        }).toList();
-      }
-    });
-  }
-
-  Map<String, String> _getSellerInfo(int sellerId) {
-    return {
-      'nameRestaurant': 'Тестовый ресторан',
-      'address': 'Пермь, ул. Революции, 13',
-      'logo': 'assets/images/placeholder_restaurant.png',
-    };
-  }
-
-  void _toggleSearch() {
-    setState(() {
-      _isSearching = !_isSearching;
-      if (!_isSearching) {
-        _searchController.clear();
-      }
-      if (_isFilterOpen) {
-        _isFilterOpen = false;
-      }
-    });
-  }
-
-  void _toggleFilter() {
-    setState(() {
-      _isFilterOpen = !_isFilterOpen;
-    });
-  }
-
-  void _showOrderDetails(OrderHistoryModel historyOrder) {
-    final order = OrderModel(
-      id: historyOrder.id,
-      idSeller: historyOrder.idSeller,
-      numberOrder: historyOrder.numberOrder,
-      cookingTime: historyOrder.cookingTime,
-      saleTime: historyOrder.saleTime,
-      endTime: historyOrder.endTime,
-      compositionOrder: historyOrder.compositionOrder,
-      description: historyOrder.description,
-      price: historyOrder.price,
-      numberReservation: historyOrder.numberReservation,
-    );
-
-    final sellerInfo = _getSellerInfo(historyOrder.idSeller);
-
-    showDialog(
-      context: context,
-      barrierColor: Colors.transparent,
-      useSafeArea: false,
-      builder: (dialogContext) {
-        return Stack(
-          fit: StackFit.expand,
-          children: [
-            BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: GestureDetector(
-                onTap: () => Navigator.pop(dialogContext),
-                child: Container(color: Colors.white.withOpacity(0.3)),
-              ),
-            ),
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: Material(
-                type: MaterialType.transparency,
-                child: SearchHeaderWidget(
-                  searchController: _searchController,
-                  isSearching: _isSearching,
-                  onSearchToggle: () {
-                    Navigator.pop(dialogContext);
-                    _toggleSearch();
-                  },
-                  onFilterPressed: () {
-                    Navigator.pop(dialogContext);
-                    _toggleFilter();
-                  },
-                  showFilter: true,
-                  isFilterOpen: false,
-                  title: 'История покупок',
-                ),
-              ),
-            ),
-            _HistoryOrderDialog(
-              order: order,
-              nameRestaurant: sellerInfo['nameRestaurant']!,
-              address: sellerInfo['address']!,
-            ),
-          ],
-        );
-      },
-    );
+  String _formatTime(DateTime? date) {
+    if (date == null) return '';
+    return '${date.hour.toString().padLeft(2, '0')}:${date.minute.toString().padLeft(2, '0')}';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(
-        children: [
-          Container(
-            width: double.infinity,
-            height: double.infinity,
-            decoration: const BoxDecoration(
-              image: DecorationImage(
-                image: AssetImage('assets/images/bucal.png'),
-                fit: BoxFit.cover,
-              ),
-            ),
-          ),
-          Column(
-            children: [
-              SearchHeaderWidget(
-                searchController: _searchController,
-                isSearching: _isSearching,
-                onSearchToggle: _toggleSearch,
-                onFilterPressed: _toggleFilter,
-                showFilter: true,
-                isFilterOpen: _isFilterOpen,
-                title: 'История покупок',
-              ),
-              Expanded(
-                child: _isLoading
-                    ? const Center(child: CircularProgressIndicator())
-                    : _buildContent(),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    if (_filteredOrders.isEmpty) {
-      return Stack(
-        children: [
-          // Размытый светлый фон
-          Positioned.fill(
-            child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-              child: Container(color: Colors.white.withOpacity(0.3)),
-            ),
-          ),
-          // Текст строго по центру экрана
-          Align(
-            alignment: Alignment.center,
-            child: const Text(
-              'На данный момент история\nваших foodbox пуста',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: Colors.black,
-              ),
-            ),
-          ),
-        ],
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.only(top: 40),
-      itemCount: _filteredOrders.length,
-      itemBuilder: (context, index) {
-        final historyOrder = _filteredOrders[index];
-        final sellerInfo = _getSellerInfo(historyOrder.idSeller);
-
-        final order = OrderModel(
-          id: historyOrder.id,
-          idSeller: historyOrder.idSeller,
-          numberOrder: historyOrder.numberOrder,
-          cookingTime: historyOrder.cookingTime,
-          saleTime: historyOrder.saleTime,
-          endTime: historyOrder.endTime,
-          compositionOrder: historyOrder.compositionOrder,
-          description: historyOrder.description,
-          price: historyOrder.price,
-          numberReservation: historyOrder.numberReservation,
-        );
-
-        return _HistoryOrderCard(
-          order: order,
-          nameRestaurant: sellerInfo['nameRestaurant']!,
-          address: sellerInfo['address']!,
-          logo: sellerInfo['logo']!,
-          onTap: () => _showOrderDetails(historyOrder),
-        );
-      },
-    );
-  }
-}
-
-/// Диалог для заказа из истории
-class _HistoryOrderDialog extends StatefulWidget {
-  final OrderModel order;
-  final String nameRestaurant;
-  final String address;
-
-  const _HistoryOrderDialog({
-    required this.order,
-    required this.nameRestaurant,
-    required this.address,
-  });
-
-  @override
-  State<_HistoryOrderDialog> createState() => _HistoryOrderDialogState();
-}
-
-class _HistoryOrderDialogState extends State<_HistoryOrderDialog> {
-  late PageController _pageController;
-  int _currentImageIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  String _formatTime(DateTime? time) {
-    if (time == null) return '';
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Dialog(
-      backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 46),
-      child: Container(
-        height: 480,
-        decoration: BoxDecoration(
-          color: const Color(0xFFFCF8F8),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0x59051F20),
-              offset: const Offset(4, 8),
-              blurRadius: 12,
-            ),
-          ],
-        ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
         child: Column(
           children: [
-            _buildImageCarousel(),
-            Expanded(child: _buildContent()),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageCarousel() {
-    return SizedBox(
-      height: 100,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: 3,
-            onPageChanged: (index) {
-              setState(() => _currentImageIndex = index);
-            },
-            itemBuilder: (context, index) {
-              return ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(15),
-                  topRight: Radius.circular(15),
-                ),
-                child: Container(
-                  color: Colors.grey[300],
-                  child: const Icon(
-                    Icons.fastfood,
-                    size: 50,
-                    color: Colors.grey,
-                  ),
-                ),
-              );
-            },
-          ),
-          Positioned(
-            top: 8,
-            right: 18,
-            child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: Container(
-                width: 14,
-                height: 14,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-                child: const Icon(Icons.close, size: 14, color: Colors.white),
-              ),
-            ),
-          ),
-          Positioned(
-            bottom: 7,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                3,
-                (index) => Container(
-                  width: _currentImageIndex == index ? 10 : 5,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9D9),
-                    borderRadius: BorderRadius.circular(2.5),
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildContent() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(15, 5, 15, 15),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          _buildRestaurantInfo(),
-          const SizedBox(height: 10),
-          Text(
-            widget.address,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Номер заказа: ${widget.order.numberOrder}',
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-            ),
-          ),
-          const SizedBox(height: 5),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Изготовлено: ${_formatTime(widget.order.cookingTime)}',
-                style: const TextStyle(
-                  fontSize: 9,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Jura',
-                  color: AppColors.textPrimary,
-                ),
-              ),
-              const Text(
-                'Заказ выполнен',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  fontFamily: 'Jura',
-                  color: AppColors.success,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 5),
-          Expanded(
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Text(
-                    'Описание: ${widget.order.description ?? "Нет описания"}',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w300,
-                      fontFamily: 'Montserrat',
-                      color: AppColors.textPrimary,
+            Padding(
+              padding: const EdgeInsets.all(20),
+              child: Row(
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.pop(context),
+                    child: SvgPicture.asset(
+                      'assets/images/Vector.svg',
+                      width: 24,
+                      height: 24,
+                      colorFilter: const ColorFilter.mode(
+                        AppColors.primary,
+                        BlendMode.srcIn,
+                      ),
                     ),
                   ),
-                ),
-                Align(
-                  alignment: Alignment.bottomRight,
-                  child: Text(
-                    '${widget.order.price.toStringAsFixed(0)} ₽',
-                    style: const TextStyle(
+                  const SizedBox(width: 15),
+                  const Text(
+                    'История заказов',
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.w500,
                       fontFamily: 'Montserrat',
                       color: AppColors.textPrimary,
                     ),
                   ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildRestaurantInfo() {
-    return Row(
-      children: [
-        Container(
-          width: 53,
-          height: 53,
-          decoration: BoxDecoration(
-            shape: BoxShape.circle,
-            border: Border.all(color: const Color(0xFF10292A), width: 1.5),
-            color: Colors.grey[300],
-          ),
-          child: const Icon(Icons.restaurant, color: Colors.grey),
-        ),
-        const SizedBox(width: 9),
-        Expanded(
-          child: Text(
-            widget.nameRestaurant,
-            style: const TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w300,
-              fontFamily: 'Montserrat',
-              color: AppColors.textPrimary,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
-/// Карточка заказа из истории
-class _HistoryOrderCard extends StatefulWidget {
-  final OrderModel order;
-  final String nameRestaurant;
-  final String address;
-  final String logo;
-  final VoidCallback onTap;
-
-  const _HistoryOrderCard({
-    required this.order,
-    required this.nameRestaurant,
-    required this.address,
-    required this.logo,
-    required this.onTap,
-  });
-
-  @override
-  State<_HistoryOrderCard> createState() => _HistoryOrderCardState();
-}
-
-class _HistoryOrderCardState extends State<_HistoryOrderCard> {
-  late PageController _pageController;
-  int _currentImageIndex = 0;
-
-  @override
-  void initState() {
-    super.initState();
-    _pageController = PageController();
-  }
-
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: Center(
-        child: Container(
-          width: 331,
-          margin: const EdgeInsets.only(bottom: 30),
-          decoration: BoxDecoration(
-            color: const Color(0xFFFCF8F8),
-            borderRadius: BorderRadius.circular(15),
-            boxShadow: [
-              BoxShadow(
-                color: const Color(0x59051F20),
-                offset: const Offset(4, 8),
-                blurRadius: 12,
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(15),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                _buildImageCarousel(),
-                _buildCardContent(),
-                _buildDetailsButton(),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildImageCarousel() {
-    return SizedBox(
-      height: 100,
-      child: Stack(
-        children: [
-          PageView.builder(
-            controller: _pageController,
-            itemCount: 3,
-            onPageChanged: (index) {
-              setState(() => _currentImageIndex = index);
-            },
-            itemBuilder: (context, index) {
-              return Container(
-                color: Colors.grey[300],
-                child: const Icon(Icons.fastfood, size: 50, color: Colors.grey),
-              );
-            },
-          ),
-          Positioned(
-            bottom: 7,
-            left: 0,
-            right: 0,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(
-                3,
-                (index) => Container(
-                  width: _currentImageIndex == index ? 10 : 5,
-                  height: 5,
-                  margin: const EdgeInsets.symmetric(horizontal: 2),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFD9D9D9),
-                    borderRadius: BorderRadius.circular(2.5),
-                  ),
-                ),
+                ],
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: _mockOrders.isEmpty
+                  ? const Center(
+                      child: Text(
+                        'История заказов пуста',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w300,
+                          fontFamily: 'Montserrat',
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    )
+                  : ListView.separated(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      itemCount: _mockOrders.length,
+                      separatorBuilder: (context, index) =>
+                          const SizedBox(height: 15),
+                      itemBuilder: (context, index) {
+                        final orderData = _mockOrders[index];
+                        return _buildOrderCard(orderData);
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCardContent() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 15),
+  Widget _buildOrderCard(Map<String, dynamic> orderData) {
+    return Container(
+      padding: const EdgeInsets.all(15),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F5F5),
+        borderRadius: BorderRadius.circular(15),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Transform.translate(
-            offset: const Offset(0, -23),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Container(
-                  width: 46,
-                  height: 46,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFF10292A),
-                      width: 1.5,
-                    ),
-                    color: Colors.grey[300],
-                  ),
-                  child: const Icon(Icons.restaurant, color: Colors.grey),
-                ),
-                const SizedBox(width: 9),
-                Text(
-                  widget.nameRestaurant,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Montserrat',
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ],
-            ),
-          ),
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Expanded(
-                flex: 3,
-                child: Text(
-                  widget.address,
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Montserrat',
-                    color: AppColors.textPrimary,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+              Text(
+                orderData['restaurantName'] ?? 'Неизвестный ресторан',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
                 ),
               ),
-              const SizedBox(width: 5),
-              const Expanded(
-                flex: 4,
-                child: Text(
-                  'Заказ выполнен',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Montserrat',
-                    color: AppColors.success,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 5),
-              Expanded(
-                flex: 2,
-                child: Text(
-                  '${widget.order.price.toStringAsFixed(0)} ₽',
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w400,
-                    fontFamily: 'Montserrat',
-                    color: AppColors.textPrimary,
-                  ),
-                  textAlign: TextAlign.right,
+              Text(
+                '${(orderData['price'] as double).toStringAsFixed(0)} ₽',
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.w600,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.primary,
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 15),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildDetailsButton() {
-    return Container(
-      width: double.infinity,
-      height: 50,
-      decoration: const BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.only(
-          bottomLeft: Radius.circular(15),
-          bottomRight: Radius.circular(15),
-        ),
-      ),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: widget.onTap,
-          borderRadius: const BorderRadius.only(
-            bottomLeft: Radius.circular(15),
-            bottomRight: Radius.circular(15),
-          ),
-          child: const Center(
-            child: Text(
-              'Подробнее',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Jura',
-                color: Colors.white,
-              ),
+          const SizedBox(height: 10),
+          Text(
+            orderData['description'] ?? '',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textSecondary,
             ),
           ),
-        ),
+          const SizedBox(height: 5),
+          Text(
+            'Состав: ${orderData['compositionOrder'] ?? ""}',
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w300,
+              fontFamily: 'Montserrat',
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Row(
+            children: [
+              const Icon(
+                Icons.access_time,
+                size: 14,
+                color: AppColors.textSecondary,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                '${_formatDate(orderData['saleTime'])} в ${_formatTime(orderData['saleTime'])}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }

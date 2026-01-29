@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../data/models/order_model.dart';
@@ -20,98 +19,26 @@ class PickupOrderScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(child: _buildContent(context)),
-    );
-  }
-
-  Widget _buildContent(BuildContext context) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          const SizedBox(height: 20),
-          _buildQRCode(),
-          const SizedBox(height: 30),
-          _buildReservationNumber(),
-          const SizedBox(height: 20),
-          _buildInstructions(),
-          const SizedBox(height: 30),
-          // Весь контент в темно-зеленом прямоугольнике
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
-              color: AppColors.primary,
-              borderRadius: BorderRadius.circular(15),
+      body: SafeArea(
+        child: Stack(
+          children: [
+            SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  _buildQRCode(),
+                  const SizedBox(height: 10),
+                  _buildReservationNumber(),
+                  const SizedBox(height: 5),
+                  _buildInstructions(),
+                  const SizedBox(height: 10),
+                  _buildRestaurantCard(context),
+                ],
+              ),
             ),
-            child: Column(
-              children: [
-                _buildRestaurantInfoContent(),
-                const SizedBox(height: 20),
-                _buildTimer(),
-                const SizedBox(height: 20),
-                _buildCancelButton(context),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
-    );
-  }
-
-  Widget _buildRestaurantInfoContent() {
-    return Row(
-      children: [
-        Container(
-          width: 60,
-          height: 60,
-          decoration: const BoxDecoration(
-            shape: BoxShape.circle,
-            color: Colors.white,
-          ),
-          child: const Icon(
-            Icons.restaurant,
-            color: AppColors.primary,
-            size: 30,
-          ),
-        ),
-        const SizedBox(width: 15),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                nameRestaurant,
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Montserrat',
-                  color: Colors.white,
-                ),
-              ),
-              const SizedBox(height: 5),
-              Text(
-                address,
-                style: const TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w300,
-                  fontFamily: 'Montserrat',
-                  color: Color(0xFF7FA29A),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const Text(
-          '500 ₽',
-          style: TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.w500,
-            fontFamily: 'Montserrat',
-            color: Colors.white,
-          ),
-        ),
-      ],
     );
   }
 
@@ -121,16 +48,16 @@ class PickupOrderScreen extends StatelessWidget {
         const Text(
           'QR-код вашего foodbox',
           style: TextStyle(
-            fontSize: 20,
-            fontWeight: FontWeight.w500,
+            fontSize: 22,
+            fontWeight: FontWeight.w400,
             fontFamily: 'Montserrat',
             color: AppColors.textPrimary,
           ),
         ),
-        const SizedBox(height: 15),
+        const SizedBox(height: 10),
         Container(
-          width: 300,
-          height: 300,
+          width: 291,
+          height: 291,
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
@@ -166,8 +93,8 @@ class PickupOrderScreen extends StatelessWidget {
     return const Text(
       'Номер брони: 221033803247',
       style: TextStyle(
-        fontSize: 18,
-        fontWeight: FontWeight.w400,
+        fontSize: 16,
+        fontWeight: FontWeight.w300,
         fontFamily: 'Montserrat',
         color: AppColors.textPrimary,
       ),
@@ -175,76 +102,94 @@ class PickupOrderScreen extends StatelessWidget {
   }
 
   Widget _buildInstructions() {
-    return const Text(
-      'Покажите QR-код на кассе\nи вам выдадут ваш заказ',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 16,
-        fontWeight: FontWeight.w300,
-        fontFamily: 'Montserrat',
-        color: AppColors.textSecondary,
+    return const Padding(
+      padding: EdgeInsets.symmetric(horizontal: 20),
+      child: Text(
+        'Покажите QR-код на кассе\nи вам выдадут ваш заказ',
+        textAlign: TextAlign.center,
+        style: TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.w300,
+          fontFamily: 'Montserrat',
+          color: Colors.black,
+        ),
       ),
     );
   }
 
-  Widget _buildRestaurantInfo() {
+  Widget _buildRestaurantCard(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
+      width: double.infinity,
+      decoration: const BoxDecoration(
         color: AppColors.primary,
-        borderRadius: BorderRadius.circular(15),
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(15),
+          topRight: Radius.circular(15),
+        ),
       ),
-      child: Row(
+      padding: const EdgeInsets.only(left: 15, top: 15, right: 15, bottom: 40),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: const Icon(
-              Icons.restaurant,
-              color: AppColors.primary,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  nameRestaurant,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Montserrat',
-                    color: Colors.white,
-                  ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: 80,
+                height: 80,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Colors.white,
                 ),
-                const SizedBox(height: 5),
-                Text(
-                  address,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Montserrat',
-                    color: Color(0xFF7FA29A),
-                  ),
+                child: const Icon(
+                  Icons.restaurant,
+                  color: AppColors.primary,
+                  size: 40,
                 ),
-              ],
-            ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      nameRestaurant,
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w400,
+                        fontFamily: 'Montserrat',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    Text(
+                      address,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                        fontFamily: 'Montserrat',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      '${order.price.toStringAsFixed(0)} ₽',
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                        fontFamily: 'Montserrat',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ),
-          Text(
-            '500 ₽',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Montserrat',
-              color: Colors.white,
-            ),
-          ),
+          const SizedBox(height: 35),
+          _buildTimer(),
+          const SizedBox(height: 20),
+          _buildCancelButton(context),
         ],
       ),
     );
@@ -252,9 +197,10 @@ class PickupOrderScreen extends StatelessWidget {
 
   Widget _buildTimer() {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(15),
       ),
       child: const Column(
@@ -262,20 +208,20 @@ class PickupOrderScreen extends StatelessWidget {
           Text(
             'До окончания продажи осталось',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               fontWeight: FontWeight.w300,
               fontFamily: 'Montserrat',
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
           SizedBox(height: 10),
           Text(
             '01:55:26',
             style: TextStyle(
-              fontSize: 32,
-              fontWeight: FontWeight.w600,
+              fontSize: 28,
+              fontWeight: FontWeight.w500,
               fontFamily: 'Montserrat',
-              color: Colors.white,
+              color: Colors.black,
             ),
           ),
         ],
@@ -284,105 +230,95 @@ class PickupOrderScreen extends StatelessWidget {
   }
 
   Widget _buildCancelButton(BuildContext context) {
-    return TextButton(
-      onPressed: () {
-        showDialog(
-          context: context,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Отменить бронь'),
-            content: const Text(
-              'Вы действительно хотите отменить бронирование?',
+    return Center(
+      child: TextButton(
+        onPressed: () {
+          showDialog(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: Colors.white,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(20),
+              ),
+              contentPadding: const EdgeInsets.all(20),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Отменить бронь?',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      fontFamily: 'Montserrat',
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () => Navigator.pop(ctx),
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.primary,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            'Нет',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Montserrat',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.pop(ctx);
+                            Navigator.pop(context);
+                          },
+                          style: TextButton.styleFrom(
+                            backgroundColor: AppColors.error,
+                            padding: const EdgeInsets.symmetric(vertical: 15),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(15),
+                            ),
+                          ),
+                          child: const Text(
+                            'Да',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w500,
+                              fontFamily: 'Montserrat',
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
             ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Нет'),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(ctx);
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  'Да',
-                  style: TextStyle(color: AppColors.error),
-                ),
-              ),
-            ],
+          );
+        },
+        child: const Text(
+          'Отменить бронь',
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
           ),
-        );
-      },
-      child: const Text(
-        'Отменить бронь',
-        style: TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          fontFamily: 'Montserrat',
-          color: Colors.white,
         ),
-      ),
-    );
-  }
-
-  Widget _buildRestaurantInfo() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.primary,
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 60,
-            height: 60,
-            decoration: const BoxDecoration(
-              shape: BoxShape.circle,
-              color: Colors.white,
-            ),
-            child: const Icon(
-              Icons.restaurant,
-              color: AppColors.primary,
-              size: 30,
-            ),
-          ),
-          const SizedBox(width: 15),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  nameRestaurant,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Montserrat',
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                Text(
-                  address,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w300,
-                    fontFamily: 'Montserrat',
-                    color: Color(0xFF7FA29A),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Text(
-            '500 ₽',
-            style: TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w500,
-              fontFamily: 'Montserrat',
-              color: Colors.white,
-            ),
-          ),
-        ],
       ),
     );
   }

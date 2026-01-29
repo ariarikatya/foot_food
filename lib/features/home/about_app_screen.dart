@@ -1,120 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../core/constants/app_colors.dart';
+import '../../../core/constants/app_colors.dart';
 
-/// Экран "О приложении"
 class AboutAppScreen extends StatelessWidget {
   const AboutAppScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/splash.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildAppBar(context),
-              Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: Column(
-                    children: [
-                      const Spacer(),
-                      // Логотип и версия по центру экрана
-                      Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Image.asset(
-                              'assets/images/logo.png',
-                              width: 200,
-                              height: 200,
-                              fit: BoxFit.contain,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const SizedBox(width: 200, height: 200);
-                              },
-                            ),
-                            const SizedBox(height: 2), // Минимальное расстояние
-                            const Text(
-                              'Версия 1.1',
-                              style: TextStyle(
-                                fontSize: 22,
-                                fontWeight: FontWeight.w400,
-                                fontFamily: 'Montserrat',
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const Spacer(),
-                      // Ссылки внизу
-                      _buildBottomLinks(),
-                      const SizedBox(height: 40),
-                    ],
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: SvgPicture.asset(
+                  'assets/images/Vector.svg',
+                  width: 24,
+                  height: 24,
+                  colorFilter: const ColorFilter.mode(
+                    AppColors.primary,
+                    BlendMode.srcIn,
                   ),
                 ),
               ),
+              const SizedBox(height: 30),
+              const Text(
+                'О приложении',
+                style: TextStyle(
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Spacer(),
+              Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    SvgPicture.asset(
+                      'assets/images/logo.svg',
+                      width: 120,
+                      height: 120,
+                    ),
+                    // БЕЗ ОТСТУПОВ между лого и версией
+                    const Text(
+                      'Версия 1.0.0',
+                      style: TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w300,
+                        fontFamily: 'Montserrat',
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Spacer(),
+              const Center(
+                child: Text(
+                  '© 2025 Foot Food. Все права защищены.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w300,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
             ],
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                Color(0xFF7FA29A),
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildBottomLinks() {
-    return const Column(
-      children: [
-        Text(
-          'Политика конфиденциальности',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Montserrat',
-            color: Colors.white,
-          ),
-        ),
-        SizedBox(height: 15),
-        Text(
-          'Условия пользовательского соглашения',
-          style: TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            fontFamily: 'Montserrat',
-            color: Colors.white,
-          ),
-        ),
-      ],
     );
   }
 }
