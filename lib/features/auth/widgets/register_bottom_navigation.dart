@@ -57,7 +57,7 @@ class RegisterBottomNavigation extends StatelessWidget {
             left: 45,
             right: 45,
             child: const Text(
-              'Нажимая кнопку “Зарегистрироваться”, вы соглашаетесь с политикой конфиденциальности...',
+              'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности...',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Jura',
@@ -124,30 +124,32 @@ class _FigmaFinalPainter extends CustomPainter {
     final double lX = size.width * 0.25;
     final double rX = size.width * 0.75;
 
+    // Параметры для скругления
+    const double smoothR = 10.0; // Радиус скругления стыков с основным прямоугольником
+    const double rectRadius = 5.0; // Радиус углов самих фигур
+
     Path mainPanel = Path()
       ..addRect(Rect.fromLTWH(0, 0, size.width, size.height));
 
-    // Параметры
-    const double smoothR = 20.0; // Радиус скругления стыков
-
-    // Создаем фигуры сразу со скругленными стыками в одном контуре
+    // Создаем горку (hill) и выемку (hole)
     Path hill = _createSmoothShape(
       w: 123,
       h: 54,
       d: 85,
       offset: 5.0,
       isHill: true,
-      sR: smoothR,
-      rectRadius: 5,
+      smoothR: smoothR,
+      rectRadius: rectRadius,
     );
+    
     Path hole = _createSmoothShape(
       w: 140,
       h: 50,
       d: 94,
       offset: 14.0,
       isHill: false,
-      sR: smoothR,
-      rectRadius: 10,
+      smoothR: smoothR,
+      rectRadius: rectRadius,
     );
 
     Path finalPath = mainPanel;
@@ -191,82 +193,109 @@ class _FigmaFinalPainter extends CustomPainter {
     required double d,
     required double offset,
     required bool isHill,
-    required double sR,
+    required double smoothR,
     required double rectRadius,
   }) {
     final path = Path();
     final double r = d / 2;
 
     if (isHill) {
-      // Горка (Hill) с плавным входом
-      path.moveTo(-w / 2 - sR, 0);
+      // ГОРКА (выступающая фигура для ВЫБРАННОГО)
+      // Левое скругление стыка с основным прямоугольником
+      path.moveTo(-w / 2 - smoothR, 0);
       path.arcToPoint(
-        Offset(-w / 2, -0.1),
-        radius: Radius.circular(sR),
-        clockwise: true,
-      ); // Левый стык
-      path.lineTo(-w / 2, 0);
-      // Рисуем прямоугольник горки (вниз)
-      path.addRRect(
-        RRect.fromLTRBAndCorners(
-          -w / 2,
-          0,
-          w / 2,
-          h,
-          bottomLeft: Radius.circular(rectRadius),
-          bottomRight: Radius.circular(rectRadius),
-        ),
+        Offset(-w / 2, smoothR),
+        radius: Radius.circular(smoothR),
+        clockwise: false,
       );
+      
+      // Левая сторона прямоугольника горки
+      path.lineTo(-w / 2, h - rectRadius);
+      
+      // Нижний левый угол прямоугольника горки
+      path.arcToPoint(
+        Offset(-w / 2 + rectRadius, h),
+        radius: Radius.circular(rectRadius),
+        clockwise: false,
+      );
+      
+      // Нижняя сторона
+      path.lineTo(w / 2 - rectRadius, h);
+      
+      // Нижний правый угол прямоугольника горки
+      path.arcToPoint(
+        Offset(w / 2, h - rectRadius),
+        radius: Radius.circular(rectRadius),
+        clockwise: false,
+      );
+      
+      // Правая сторона прямоугольника горки
+      path.lineTo(w / 2, smoothR);
+      
+      // Правое скругление стыка с основным прямоугольником
+      path.arcToPoint(
+        Offset(w / 2 + smoothR, 0),
+        radius: Radius.circular(smoothR),
+        clockwise: false,
+      );
+      
+      // Верхняя линия по основному прямоугольнику
+      path.lineTo(-w / 2 - smoothR, 0);
+      
       // Добавляем круг
       path.addOval(
         Rect.fromCircle(center: Offset(0, h - offset - r), radius: r),
       );
-      // Правый стык (добавим дугу отдельно для корректного Union)
-      Path rightSmooth = Path()
-        ..moveTo(w / 2, 0)
-        ..arcToPoint(
-          Offset(w / 2 + sR, 0),
-          radius: Radius.circular(sR),
-          clockwise: true,
-        );
-      path.addPath(rightSmooth, Offset.zero);
+      
     } else {
-      // Вырез (Hole) с плавными краями сверху
-      // Рисуем верхнюю часть выреза с "ушками" скругления
-      path.moveTo(-w / 2 - sR, 0);
-      path.lineTo(-w / 2, 0);
-      path.lineTo(-w / 2, sR);
+      // ВЫЕМКА (вырезанная фигура для НЕВЫБРАННОГО)
+      // Левое скругление стыка
+      path.moveTo(-w / 2 - smoothR, 0);
       path.arcToPoint(
-        Offset(-w / 2 - sR, 0),
-        radius: Radius.circular(sR),
-        clockwise: false,
-      ); // Левое скругление
-
-      path.moveTo(w / 2 + sR, 0);
-      path.lineTo(w / 2, 0);
-      path.lineTo(w / 2, sR);
-      path.arcToPoint(
-        Offset(w / 2 + sR, 0),
-        radius: Radius.circular(sR),
+        Offset(-w / 2, -smoothR),
+        radius: Radius.circular(smoothR),
         clockwise: true,
-      ); // Правое скругление
-
-      // Основной прямоугольник выреза
-      path.addRRect(
-        RRect.fromLTRBAndCorners(
-          -w / 2,
-          -h,
-          w / 2,
-          0,
-          topLeft: Radius.circular(rectRadius),
-          topRight: Radius.circular(rectRadius),
-        ),
       );
-      // Круг выреза
+      
+      // Левая сторона
+      path.lineTo(-w / 2, -h + rectRadius);
+      
+      // Верхний левый угол выемки
+      path.arcToPoint(
+        Offset(-w / 2 + rectRadius, -h),
+        radius: Radius.circular(rectRadius),
+        clockwise: true,
+      );
+      
+      // Верхняя сторона
+      path.lineTo(w / 2 - rectRadius, -h);
+      
+      // Верхний правый угол выемки
+      path.arcToPoint(
+        Offset(w / 2, -h + rectRadius),
+        radius: Radius.circular(rectRadius),
+        clockwise: true,
+      );
+      
+      // Правая сторона
+      path.lineTo(w / 2, -smoothR);
+      
+      // Правое скругление стыка
+      path.arcToPoint(
+        Offset(w / 2 + smoothR, 0),
+        radius: Radius.circular(smoothR),
+        clockwise: true,
+      );
+      
+      // Линия по основному прямоугольнику
+      path.lineTo(-w / 2 - smoothR, 0);
+      
+      // Добавляем круг
       path.addOval(
         Rect.fromCircle(center: Offset(0, -h + offset + r), radius: r),
       );
     }
+    
     return path;
   }
 

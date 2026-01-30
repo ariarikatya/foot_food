@@ -1,12 +1,20 @@
-// ===== 1. add_card_screen.dart =====
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../core/widgets/custom_button.dart';
+import '../../../data/models/card_model.dart';
+import '../../../data/services/mock_api_service.dart';
 
 class AddCardScreen extends StatefulWidget {
-  const AddCardScreen({super.key});
+  final int userId;
+  final String userName;
+
+  const AddCardScreen({
+    super.key,
+    required this.userId,
+    required this.userName,
+  });
 
   @override
   State<AddCardScreen> createState() => _AddCardScreenState();
@@ -14,10 +22,14 @@ class AddCardScreen extends StatefulWidget {
 
 class _AddCardScreenState extends State<AddCardScreen> {
   final _formKey = GlobalKey<FormState>();
+  final MockApiService _apiService = MockApiService();
+  
   final _cardNumberController = TextEditingController();
   final _expiryController = TextEditingController();
   final _cvcController = TextEditingController();
+  
   bool _saveCard = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -27,9 +39,53 @@ class _AddCardScreenState extends State<AddCardScreen> {
     super.dispose();
   }
 
-  void _addCard() {
-    if (_formKey.currentState?.validate() ?? false) {
-      Navigator.pop(context);
+  Future<void> _addCard() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Парсим данные карты
+      final cardNumber = int.parse(_cardNumberController.text.replaceAll(' ', ''));
+      final expiryString = _expiryController.text.replaceAll('/', '');
+      final endTime = int.parse(expiryString); // Формат MMYY
+      final cvc = int.parse(_cvcController.text);
+
+      // Создаем модель карты
+      final newCard = CardModel(
+        id: 0, // Будет назначен сервером
+        number: cardNumber,
+        endTime: endTime,
+        cvc: cvc,
+        nameUser: widget.userName,
+        idUser: widget.userId,
+      );
+
+      // Отправляем на сервер
+      await _apiService.addCard(newCard);
+
+      if (mounted) {
+        Navigator.pop(context, true); // Возвращаем true для обновления списка
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка добавления карты: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -231,10 +287,10 @@ class _AddCardScreenState extends State<AddCardScreen> {
                 ),
                 const SizedBox(height: 30),
                 CustomButton(
-                  text: 'Добавить',
+                  text: _isLoading ? 'Добавление...' : 'Добавить',
                   fontSize: 28,
                   fontWeight: FontWeight.w500,
-                  onPressed: _addCard,
+                  onPressed: _isLoading ? null : _addCard,
                 ),
               ],
             ),

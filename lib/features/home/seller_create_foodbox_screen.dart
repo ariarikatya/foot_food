@@ -1,112 +1,326 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:intl/intl.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../data/models/order_model.dart';
+import '../../../data/services/mock_api_service.dart';
+import 'dart:math';
 
-/// Экран создания foodbox для продавца (Экран 7)
 class SellerCreateFoodboxScreen extends StatefulWidget {
-  const SellerCreateFoodboxScreen({super.key});
+  final int sellerId;
+
+  const SellerCreateFoodboxScreen({
+    super.key,
+    required this.sellerId,
+  });
 
   @override
-  State<SellerCreateFoodboxScreen> createState() =>
-      _SellerCreateFoodboxScreenState();
+  State<SellerCreateFoodboxScreen> createState() => _SellerCreateFoodboxScreenState();
 }
 
 class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _imagePicker = ImagePicker();
+  final MockApiService _apiService = MockApiService();
 
-  final _cookingTimeController = TextEditingController();
-  final _saleEndTimeController = TextEditingController();
-  bool _compositionEnabled = false;
-  final _descriptionController = TextEditingController();
   final _priceController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _compositionController = TextEditingController();
+
+  DateTime? _cookingTime;
+  DateTime? _saleTime;
+  DateTime? _endTime;
+
+  bool _isLoading = false;
 
   @override
   void dispose() {
-    _cookingTimeController.dispose();
-    _saleEndTimeController.dispose();
-    _descriptionController.dispose();
     _priceController.dispose();
+    _descriptionController.dispose();
+    _compositionController.dispose();
     super.dispose();
   }
 
-  Future<void> _selectTime(
-    BuildContext context,
-    TextEditingController controller,
-  ) async {
+  int _generateOrderNumber() {
+    final random = Random();
+    return 100000 + random.nextInt(900000); // 6-значное число
+  }
+
+  Future<void> _selectTime(BuildContext context, String type) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.light(
+              primary: AppColors.primary,
+              onPrimary: Colors.white,
+              onSurface: AppColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
     );
 
     if (picked != null) {
+      final now = DateTime.now();
+      final selectedDateTime = DateTime(
+        now.year,
+        now.month,
+        now.day,
+        picked.hour,
+        picked.minute,
+      );
+
       setState(() {
-        controller.text = picked.format(context);
+        switch (type) {
+          case 'cooking':
+            _cookingTime = selectedDateTime;
+            break;
+          case 'sale':
+            _saleTime = selectedDateTime;
+            break;
+          case 'end':
+            _endTime = selectedDateTime;
+            break;
+        }
       });
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: AppColors.error),
-    );
+  String _formatTime(DateTime? time) {
+    if (time == null) return 'Выбрать время';
+    return DateFormat('HH:mm').format(time);
   }
 
   Future<void> _createFoodbox() async {
-    if (_formKey.currentState?.validate() ?? false) {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    if (_cookingTime == null || _saleTime == null || _endTime == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Foodbox создан успешно!'),
-          backgroundColor: AppColors.success,
+          content: Text('Пожалуйста, заполните все временные поля'),
+          backgroundColor: AppColors.error,
         ),
       );
-      Navigator.pop(context);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final newOrder = OrderModel(
+        id: 0, // Будет назначен сервером
+        idSeller: widget.sellerId,
+        numberOrder: _generateOrderNumber(),
+        cookingTime: _cookingTime,
+        saleTime: _saleTime,
+        endTime: _endTime,
+        compositionOrder: _compositionController.text,
+        description: _descriptionController.text,
+        price: double.parse(_priceController.text),
+        numberReservation: 0, // Пока не забронирован
+      );
+
+      await _apiService.createOrder(newOrder);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Foodbox успешно создан!'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        Navigator.pop(context, true); // Возвращаем true для обновления списка
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка создания Foodbox: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/selladd.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          bottom: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(AppSpacing.lg),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 20),
-                  _buildTitle(),
-                  const SizedBox(height: 30),
-                  _buildCookingTimeField(),
-                  const SizedBox(height: 30),
-                  _buildSaleEndTimeField(),
-                  const SizedBox(height: 30),
-                  _buildCompositionToggle(),
-                  const SizedBox(height: 30),
-                  _buildDescriptionField(),
-                  const SizedBox(height: 30),
-                  _buildPriceField(),
-                  const SizedBox(height: 10),
-                  _buildTotalPrice(),
-                  const SizedBox(height: 40),
-                  _buildCreateButton(),
-                  const SizedBox(height: 180),
-                ],
-              ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: SvgPicture.asset(
+                    'assets/images/Vector.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Создать Foodbox',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                _buildTimeSelector(
+                  'Время приготовления',
+                  _cookingTime,
+                  () => _selectTime(context, 'cooking'),
+                ),
+                const SizedBox(height: 20),
+                _buildTimeSelector(
+                  'Время выставления на продажу',
+                  _saleTime,
+                  () => _selectTime(context, 'sale'),
+                ),
+                const SizedBox(height: 20),
+                _buildTimeSelector(
+                  'Время окончания продажи',
+                  _endTime,
+                  () => _selectTime(context, 'end'),
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _compositionController,
+                  decoration: InputDecoration(
+                    labelText: 'Внутри',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Montserrat',
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Заполните состав';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _descriptionController,
+                  maxLines: 3,
+                  decoration: InputDecoration(
+                    labelText: 'Описание',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Montserrat',
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Заполните описание';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 20),
+                TextFormField(
+                  controller: _priceController,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Цена (₽)',
+                    labelStyle: const TextStyle(
+                      color: AppColors.textSecondary,
+                      fontFamily: 'Montserrat',
+                    ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                  ),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Укажите цену';
+                    }
+                    if (double.tryParse(value) == null) {
+                      return 'Введите корректную цену';
+                    }
+                    if (double.parse(value) <= 0) {
+                      return 'Цена должна быть больше 0';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 40),
+                CustomButton(
+                  text: _isLoading ? 'Создание...' : 'Создать',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  onPressed: _isLoading ? null : _createFoodbox,
+                ),
+              ],
             ),
           ),
         ),
@@ -114,203 +328,49 @@ class _SellerCreateFoodboxScreenState extends State<SellerCreateFoodboxScreen> {
     );
   }
 
-  Widget _buildTitle() {
-    return const Text(
-      'Создать foodbox',
-      textAlign: TextAlign.center,
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w300,
-        fontFamily: 'Montserrat',
-        color: AppColors.textPrimary,
-      ),
-    );
-  }
-
-  Widget _buildCookingTimeField() {
+  Widget _buildTimeSelector(String label, DateTime? time, VoidCallback onTap) {
     return GestureDetector(
-      onTap: () => _selectTime(context, _cookingTimeController),
-      child: AbsorbPointer(
-        child: CustomTextField(
-          controller: _cookingTimeController,
-          hintText: 'Время приготовления',
-          validator: (v) =>
-              v == null || v.isEmpty ? 'Укажите время приготовления' : null,
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        decoration: BoxDecoration(
+          color: const Color(0xFFF5F5F5),
+          borderRadius: BorderRadius.circular(15),
         ),
-      ),
-    );
-  }
-
-  Widget _buildSaleEndTimeField() {
-    return GestureDetector(
-      onTap: () => _selectTime(context, _saleEndTimeController),
-      child: AbsorbPointer(
-        child: CustomTextField(
-          controller: _saleEndTimeController,
-          hintText: 'В продаже до',
-          validator: (v) => v == null || v.isEmpty ? 'Укажите время' : null,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCompositionToggle() {
-    return Stack(
-      children: [
-        Positioned.fill(
-          child: CustomPaint(
-            painter: _OuterShadowPainter(radius: AppSpacing.radiusLg),
-          ),
-        ),
-        Container(
-          height: 60, // Фиксированная высота как у других полей
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.3),
-            borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-            border: Border.all(color: AppColors.border, width: 2),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Row(
-            children: [
-              const Text(
-                'Состав',
-                style: TextStyle(
-                  fontSize: 22,
-                  fontWeight: FontWeight.w400,
-                  fontFamily: 'Montserrat',
-                  color: Color(0xFF1A1C1B),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              label,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w400,
+                fontFamily: 'Montserrat',
+                color: AppColors.textSecondary,
+              ),
+            ),
+            Row(
+              children: [
+                Text(
+                  _formatTime(time),
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Montserrat',
+                    color: time != null ? AppColors.textPrimary : AppColors.textSecondary,
+                  ),
                 ),
-              ),
-              const Spacer(),
-              Switch(
-                value: _compositionEnabled,
-                onChanged: (value) {
-                  setState(() => _compositionEnabled = value);
-                },
-                activeColor: AppColors.primary,
-              ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildDescriptionField() {
-    return Container(
-      constraints: const BoxConstraints(minHeight: 60),
-      child: TextField(
-        controller: _descriptionController,
-        maxLines: null,
-        style: const TextStyle(
-          fontSize: 22,
-          fontWeight: FontWeight.w400,
-          color: Color(0xFF1A1C1B),
-          fontFamily: 'Montserrat',
-        ),
-        decoration: InputDecoration(
-          hintText: 'Описание',
-          hintStyle: const TextStyle(
-            fontSize: 22,
-            fontWeight: FontWeight.w400,
-            color: Color(0xFF1A1C1B),
-            fontFamily: 'Montserrat',
-          ),
-          filled: true,
-          fillColor: Colors.white.withOpacity(0.3),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 16,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: AppColors.border, width: 2),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: AppColors.border, width: 2),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(30),
-            borderSide: const BorderSide(color: AppColors.border, width: 2),
-          ),
+                const SizedBox(width: 10),
+                const Icon(
+                  Icons.access_time,
+                  color: AppColors.primary,
+                  size: 20,
+                ),
+              ],
+            ),
+          ],
         ),
       ),
     );
   }
-
-  Widget _buildPriceField() {
-    return CustomTextField(
-      controller: _priceController,
-      hintText: 'Стоимость',
-      keyboardType: TextInputType.number,
-      validator: (v) {
-        if (v == null || v.isEmpty) return 'Укажите стоимость';
-        if (double.tryParse(v) == null) return 'Неверный формат';
-        return null;
-      },
-    );
-  }
-
-  Widget _buildTotalPrice() {
-    return Align(
-      alignment: Alignment.centerRight,
-      child: Text(
-        'Итоговая стоимость: ${_priceController.text.isEmpty ? "0" : _priceController.text} ₽',
-        style: const TextStyle(
-          fontSize: 18,
-          fontWeight: FontWeight.w400,
-          fontFamily: 'Montserrat',
-          color: AppColors.textPrimary,
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCreateButton() {
-    return CustomButton(
-      text: 'Создать',
-      fontSize: 28,
-      fontWeight: FontWeight.w500,
-      onPressed: _createFoodbox,
-    );
-  }
-}
-
-class _OuterShadowPainter extends CustomPainter {
-  final double radius;
-
-  _OuterShadowPainter({required this.radius});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rrect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, size.width, size.height),
-      Radius.circular(radius),
-    );
-
-    canvas.saveLayer(
-      Rect.fromLTWH(-50, -50, size.width + 100, size.height + 100),
-      Paint(),
-    );
-
-    final shadowPaint = Paint()
-      ..color = const Color(0x4D051F20)
-      ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12 / 2);
-
-    canvas.translate(4, 8);
-    canvas.drawRRect(rrect, shadowPaint);
-    canvas.translate(-4, -8);
-
-    final cutPaint = Paint()
-      ..blendMode = BlendMode.dstOut
-      ..color = Colors.black;
-
-    canvas.drawRRect(rrect, cutPaint);
-
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

@@ -1,21 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
-import '../../core/constants/app_colors.dart';
-import '../../core/constants/app_spacing.dart';
-import '../../core/widgets/custom_button.dart';
-import '../../core/widgets/custom_text_field.dart';
+import '../../../core/constants/app_colors.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../data/models/seller_model.dart';
+import '../../../data/services/mock_api_service.dart';
 
-/// Экран редактирования данных продавца
 class SellerEditDataScreen extends StatefulWidget {
-  final String nameRestaurant;
-  final String email;
-  final String address;
+  final int sellerId;
 
   const SellerEditDataScreen({
     super.key,
-    required this.nameRestaurant,
-    required this.email,
-    required this.address,
+    required this.sellerId,
   });
 
   @override
@@ -24,18 +19,95 @@ class SellerEditDataScreen extends StatefulWidget {
 
 class _SellerEditDataScreenState extends State<SellerEditDataScreen> {
   final _formKey = GlobalKey<FormState>();
+  final MockApiService _apiService = MockApiService();
+
   final _emailController = TextEditingController();
   final _restaurantNameController = TextEditingController();
   final _addressController = TextEditingController();
+  final _phoneController = TextEditingController();
 
-  bool _isLoading = false;
+  bool _isLoading = true;
+  bool _isSaving = false;
+  SellerModel? _currentSeller;
 
   @override
   void initState() {
     super.initState();
-    _emailController.text = widget.email;
-    _restaurantNameController.text = widget.nameRestaurant;
-    _addressController.text = widget.address;
+    _loadSellerData();
+  }
+
+  Future<void> _loadSellerData() async {
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final seller = await _apiService.getSellerById(widget.sellerId);
+      setState(() {
+        _currentSeller = seller;
+        _emailController.text = seller.email;
+        _restaurantNameController.text = seller.nameRestaurant;
+        _addressController.text = seller.address;
+        _phoneController.text = seller.phone;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _isLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка загрузки данных: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    }
+  }
+
+  Future<void> _saveChanges() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await _apiService.updateSeller(widget.sellerId, {
+        'email': _emailController.text,
+        'name_restaurant': _restaurantNameController.text,
+        'address': _addressController.text,
+        'phone': _phoneController.text,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Данные успешно обновлены'),
+            backgroundColor: AppColors.primary,
+          ),
+        );
+        Navigator.pop(context, true); // Возвращаем true для обновления данных
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка сохранения: $e'),
+            backgroundColor: AppColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
   }
 
   @override
@@ -43,151 +115,219 @@ class _SellerEditDataScreenState extends State<SellerEditDataScreen> {
     _emailController.dispose();
     _restaurantNameController.dispose();
     _addressController.dispose();
+    _phoneController.dispose();
     super.dispose();
-  }
-
-  Future<void> _handleUpdate() async {
-    if (_formKey.currentState?.validate() ?? false) {
-      setState(() => _isLoading = true);
-
-      // Имитация обновления данных
-      await Future.delayed(const Duration(seconds: 2));
-
-      if (mounted) {
-        setState(() => _isLoading = false);
-
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Данные успешно обновлены'),
-            backgroundColor: AppColors.success,
-          ),
-        );
-
-        Navigator.pop(context);
-      }
-    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Container(
-        width: double.infinity,
-        height: double.infinity,
-        decoration: const BoxDecoration(
-          image: DecorationImage(
-            image: AssetImage('assets/images/regsell.png'),
-            fit: BoxFit.cover,
-          ),
-        ),
-        child: SafeArea(
-          child: Column(
-            children: [
-              _buildAppBar(),
-              Expanded(
-                child: SingleChildScrollView(
-                  padding: const EdgeInsets.all(AppSpacing.lg),
-                  child: Form(
-                    key: _formKey,
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const SizedBox(height: 40),
-                        _buildTitle(),
-                        const SizedBox(height: 30),
-                        _buildEmailField(),
-                        const SizedBox(height: 30),
-                        _buildRestaurantNameField(),
-                        const SizedBox(height: 30),
-                        _buildAddressField(),
-                        const SizedBox(height: 40),
-                        _buildUpdateButton(),
-                      ],
-                    ),
+      backgroundColor: Colors.white,
+      body: SafeArea(
+        child: _isLoading
+            ? const Center(
+                child: CircularProgressIndicator(
+                  color: AppColors.primary,
+                ),
+              )
+            : SingleChildScrollView(
+                padding: const EdgeInsets.all(20),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      GestureDetector(
+                        onTap: () => Navigator.pop(context),
+                        child: SvgPicture.asset(
+                          'assets/images/Vector.svg',
+                          width: 24,
+                          height: 24,
+                          colorFilter: const ColorFilter.mode(
+                            AppColors.primary,
+                            BlendMode.srcIn,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      const Text(
+                        'Редактировать данные',
+                        style: TextStyle(
+                          fontSize: 28,
+                          fontWeight: FontWeight.w500,
+                          fontFamily: 'Montserrat',
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      TextFormField(
+                        controller: _emailController,
+                        keyboardType: TextInputType.emailAddress,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите email';
+                          }
+                          if (!value.contains('@')) {
+                            return 'Введите корректный email';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _restaurantNameController,
+                        decoration: InputDecoration(
+                          labelText: 'Название ресторана',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите название ресторана';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _addressController,
+                        decoration: InputDecoration(
+                          labelText: 'Адрес',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите адрес';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _phoneController,
+                        keyboardType: TextInputType.phone,
+                        decoration: InputDecoration(
+                          labelText: 'Телефон',
+                          labelStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(
+                              color: AppColors.primary,
+                              width: 1,
+                            ),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 20,
+                            vertical: 18,
+                          ),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите телефон';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 40),
+                      CustomButton(
+                        text: _isSaving ? 'Сохранение...' : 'Сохранить',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w500,
+                        onPressed: _isSaving ? null : _saveChanges,
+                      ),
+                    ],
                   ),
                 ),
               ),
-            ],
-          ),
-        ),
       ),
-    );
-  }
-
-  Widget _buildAppBar() {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          GestureDetector(
-            onTap: () => Navigator.pop(context),
-            child: SvgPicture.asset(
-              'assets/images/Vector.svg',
-              width: 24,
-              height: 24,
-              colorFilter: const ColorFilter.mode(
-                AppColors.primary,
-                BlendMode.srcIn,
-              ),
-            ),
-          ),
-          const Spacer(),
-          Image.asset(
-            'assets/images/logodark.png',
-            width: 71,
-            height: 41,
-            fit: BoxFit.contain,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildTitle() {
-    return const Text(
-      'Редактирование данных',
-      style: TextStyle(
-        fontSize: 20,
-        fontWeight: FontWeight.w300,
-        fontFamily: 'Montserrat',
-        color: AppColors.textPrimary,
-      ),
-    );
-  }
-
-  Widget _buildEmailField() {
-    return CustomTextField(
-      controller: _emailController,
-      hintText: 'Email',
-      keyboardType: TextInputType.emailAddress,
-      validator: (v) => v != null && v.contains('@') ? null : 'Неверный email',
-    );
-  }
-
-  Widget _buildRestaurantNameField() {
-    return CustomTextField(
-      controller: _restaurantNameController,
-      hintText: 'Название ресторана',
-      validator: (v) =>
-          v != null && v.length >= 6 ? null : 'Минимум 6 символов',
-    );
-  }
-
-  Widget _buildAddressField() {
-    return CustomTextField(
-      controller: _addressController,
-      hintText: 'Адрес',
-      validator: (v) => v != null && v.isNotEmpty ? null : 'Введите адрес',
-    );
-  }
-
-  Widget _buildUpdateButton() {
-    return CustomButton(
-      text: 'Изменить',
-      fontSize: 28,
-      fontWeight: FontWeight.w500,
-      onPressed: _isLoading ? null : _handleUpdate,
-      isLoading: _isLoading,
     );
   }
 }

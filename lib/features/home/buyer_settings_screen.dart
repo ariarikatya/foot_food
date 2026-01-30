@@ -1,104 +1,92 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
-import 'about_app_screen.dart';
+import '../../../core/widgets/custom_button.dart';
+import '../../../data/models/card_model.dart';
+import '../../../data/services/mock_api_service.dart';
 
-class BuyerSettingsScreen extends StatefulWidget {
-  const BuyerSettingsScreen({super.key});
+class AddCardScreen extends StatefulWidget {
+  final int userId;
+  final String userName;
+
+  const AddCardScreen({
+    super.key,
+    required this.userId,
+    required this.userName,
+  });
 
   @override
-  State<BuyerSettingsScreen> createState() => _BuyerSettingsScreenState();
+  State<AddCardScreen> createState() => _AddCardScreenState();
 }
 
-class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
-  String _selectedCity = 'Москва';
+class _AddCardScreenState extends State<AddCardScreen> {
+  final _formKey = GlobalKey<FormState>();
+  final MockApiService _apiService = MockApiService();
+  
+  final _cardNumberController = TextEditingController();
+  final _expiryController = TextEditingController();
+  final _cvcController = TextEditingController();
+  
+  bool _saveCard = false;
+  bool _isLoading = false;
 
-  final List<String> _cities = [
-    'Москва',
-    'Санкт-Петербург',
-    'Новосибирск',
-    'Екатеринбург',
-    'Казань',
-    'Нижний Новгород',
-    'Челябинск',
-    'Самара',
-    'Омск',
-    'Ростов-на-Дону',
-    'Уфа',
-    'Красноярск',
-    'Воронеж',
-    'Пермь',
-    'Волгоград',
-  ];
+  @override
+  void dispose() {
+    _cardNumberController.dispose();
+    _expiryController.dispose();
+    _cvcController.dispose();
+    super.dispose();
+  }
 
-  void _showCityPicker() {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-      ),
-      builder: (context) {
-        return Container(
-          height: 400,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-          child: Column(
-            children: [
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 20),
-                child: Text(
-                  'Выберите город',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w500,
-                    fontFamily: 'Montserrat',
-                    color: AppColors.textPrimary,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 20),
-              Expanded(
-                child: Scrollbar(
-                  thumbVisibility: true, // Скроллбар всегда виден
-                  thickness: 6, // Толщина скроллбара
-                  radius: const Radius.circular(3), // Прямоугольный скролл
-                  child: ListView.builder(
-                    itemCount: _cities.length,
-                    itemBuilder: (context, index) {
-                      final city = _cities[index];
-                      final isSelected = city == _selectedCity;
-                      return ListTile(
-                        title: Text(
-                          city,
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: isSelected ? FontWeight.w500 : FontWeight.w400,
-                            fontFamily: 'Montserrat',
-                            color: isSelected ? AppColors.primary : AppColors.textPrimary,
-                          ),
-                        ),
-                        trailing: isSelected
-                            ? const Icon(
-                                Icons.check,
-                                color: AppColors.primary,
-                              )
-                            : null,
-                        onTap: () {
-                          setState(() {
-                            _selectedCity = city;
-                          });
-                          Navigator.pop(context);
-                        },
-                      );
-                    },
-                  ),
-                ),
-              ),
-            ],
+  Future<void> _addCard() async {
+    if (!(_formKey.currentState?.validate() ?? false)) {
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      // Парсим данные карты
+      final cardNumber = int.parse(_cardNumberController.text.replaceAll(' ', ''));
+      final expiryString = _expiryController.text.replaceAll('/', '');
+      final endTime = int.parse(expiryString); // Формат MMYY
+      final cvc = int.parse(_cvcController.text);
+
+      // Создаем модель карты
+      final newCard = CardModel(
+        id: 0, // Будет назначен сервером
+        number: cardNumber,
+        endTime: endTime,
+        cvc: cvc,
+        nameUser: widget.userName,
+        idUser: widget.userId,
+      );
+
+      // Отправляем на сервер
+      await _apiService.addCard(newCard);
+
+      if (mounted) {
+        Navigator.pop(context, true); // Возвращаем true для обновления списка
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ошибка добавления карты: $e'),
+            backgroundColor: AppColors.error,
           ),
         );
-      },
-    );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -106,297 +94,247 @@ class _BuyerSettingsScreenState extends State<BuyerSettingsScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(20),
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () => Navigator.pop(context),
-                    child: SvgPicture.asset(
-                      'assets/images/Vector.svg',
-                      width: 24,
-                      height: 24,
-                      colorFilter: const ColorFilter.mode(
-                        AppColors.primary,
-                        BlendMode.srcIn,
-                      ),
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Form(
+            key: _formKey,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                GestureDetector(
+                  onTap: () => Navigator.pop(context),
+                  child: SvgPicture.asset(
+                    'assets/images/Vector.svg',
+                    width: 24,
+                    height: 24,
+                    colorFilter: const ColorFilter.mode(
+                      AppColors.primary,
+                      BlendMode.srcIn,
                     ),
                   ),
-                  const SizedBox(width: 15),
-                  const Text(
-                    'Настройки',
-                    style: TextStyle(
-                      fontSize: 28,
-                      fontWeight: FontWeight.w500,
+                ),
+                const SizedBox(height: 30),
+                const Text(
+                  'Добавить карту',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 30),
+                // Поле номера карты - БЕЗ ТЕНИ
+                TextFormField(
+                  controller: _cardNumberController,
+                  keyboardType: TextInputType.number,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.digitsOnly,
+                    LengthLimitingTextInputFormatter(16),
+                    _CardNumberFormatter(),
+                  ],
+                  decoration: InputDecoration(
+                    hintText: 'Номер карты',
+                    hintStyle: const TextStyle(
+                      color: AppColors.textSecondary,
                       fontFamily: 'Montserrat',
-                      color: AppColors.textPrimary,
                     ),
+                    filled: true,
+                    fillColor: const Color(0xFFF5F5F5),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: BorderSide.none,
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(15),
+                      borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                   ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(horizontal: 20),
-                children: [
-                  _buildSettingsItem(
-                    'Изменить город',
-                    _selectedCity,
-                    onTap: _showCityPicker,
-                  ),
-                  const SizedBox(height: 15),
-                  _buildSettingsItem(
-                    'О приложении',
-                    '',
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const AboutAppScreen(),
+                  validator: (value) {
+                    if (value == null || value.isEmpty) {
+                      return 'Введите номер карты';
+                    }
+                    if (value.replaceAll(' ', '').length < 16) {
+                      return 'Введите корректный номер карты';
+                    }
+                    return null;
+                  },
+                ),
+                const SizedBox(height: 30),
+                Row(
+                  children: [
+                    // Срок действия - БЕЗ ТЕНИ
+                    Expanded(
+                      child: TextFormField(
+                        controller: _expiryController,
+                        keyboardType: TextInputType.number,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(4),
+                          _ExpiryDateFormatter(),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: 'ММ/ГГ',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                         ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 15),
-                  _buildSettingsItem(
-                    'Выйти',
-                    '',
-                    onTap: _showLogoutDialog,
-                    isDestructive: true,
-                  ),
-                  const SizedBox(height: 15),
-                  _buildSettingsItem(
-                    'Удалить аккаунт',
-                    '',
-                    onTap: _showDeleteAccountDialog,
-                    isDestructive: true,
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSettingsItem(
-    String title,
-    String subtitle, {
-    VoidCallback? onTap,
-    bool isDestructive = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFF5F5F5),
-          borderRadius: BorderRadius.circular(15),
-          boxShadow: const [
-            BoxShadow(
-              color: Color(0x1A000000),
-              offset: Offset(0, 2),
-              blurRadius: 8,
-            ),
-          ],
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              title,
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.w400,
-                fontFamily: 'Montserrat',
-                color: isDestructive ? AppColors.error : AppColors.textPrimary,
-              ),
-            ),
-            if (subtitle.isNotEmpty)
-              Text(
-                subtitle,
-                style: const TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w300,
-                  fontFamily: 'Montserrat',
-                  color: AppColors.textSecondary,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите срок';
+                          }
+                          if (value.length < 5) {
+                            return 'Некорректно';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                    const SizedBox(width: 16),
+                    // CVC - БЕЗ ТЕНИ
+                    Expanded(
+                      child: TextFormField(
+                        controller: _cvcController,
+                        keyboardType: TextInputType.number,
+                        obscureText: true,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                          LengthLimitingTextInputFormatter(3),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: 'CVC',
+                          hintStyle: const TextStyle(
+                            color: AppColors.textSecondary,
+                            fontFamily: 'Montserrat',
+                          ),
+                          filled: true,
+                          fillColor: const Color(0xFFF5F5F5),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: const BorderSide(color: AppColors.primary, width: 1),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Введите CVC';
+                          }
+                          if (value.length < 3) {
+                            return 'Некорректно';
+                          }
+                          return null;
+                        },
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showLogoutDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Выйти из аккаунта?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Montserrat',
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Text(
-                      'Отмена',
+                const SizedBox(height: 30),
+                // Слайдер - цвет основной
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text(
+                      'Запомнить карту',
                       style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
                         fontFamily: 'Montserrat',
-                        color: Colors.white,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                  ),
+                    Switch(
+                      value: _saveCard,
+                      onChanged: (value) {
+                        setState(() {
+                          _saveCard = value;
+                        });
+                      },
+                      activeColor: Colors.white,
+                      activeTrackColor: AppColors.primary,
+                      inactiveThumbColor: Colors.white,
+                      inactiveTrackColor: Colors.grey[300],
+                    ),
+                  ],
                 ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      // Логика выхода
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Text(
-                      'Выйти',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Montserrat',
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
+                const SizedBox(height: 30),
+                CustomButton(
+                  text: _isLoading ? 'Добавление...' : 'Добавить',
+                  fontSize: 28,
+                  fontWeight: FontWeight.w500,
+                  onPressed: _isLoading ? null : _addCard,
                 ),
               ],
             ),
-          ],
+          ),
         ),
       ),
     );
   }
+}
 
-  void _showDeleteAccountDialog() {
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: Colors.white,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
-        ),
-        contentPadding: const EdgeInsets.all(20),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text(
-              'Удалить аккаунт?',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.w500,
-                fontFamily: 'Montserrat',
-                color: AppColors.textPrimary,
-              ),
-            ),
-            const SizedBox(height: 10),
-            const Text(
-              'Это действие нельзя отменить',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 14,
-                fontWeight: FontWeight.w300,
-                fontFamily: 'Montserrat',
-                color: AppColors.textSecondary,
-              ),
-            ),
-            const SizedBox(height: 20),
-            Row(
-              children: [
-                Expanded(
-                  child: TextButton(
-                    onPressed: () => Navigator.pop(ctx),
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.primary,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Text(
-                      'Отмена',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Montserrat',
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: TextButton(
-                    onPressed: () {
-                      Navigator.pop(ctx);
-                      // Логика удаления аккаунта
-                    },
-                    style: TextButton.styleFrom(
-                      backgroundColor: AppColors.error,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                    ),
-                    child: const Text(
-                      'Удалить',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w500,
-                        fontFamily: 'Montserrat',
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
+class _CardNumberFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text.replaceAll(' ', '');
+    final buffer = StringBuffer();
+    for (int i = 0; i < text.length; i++) {
+      buffer.write(text[i]);
+      if ((i + 1) % 4 == 0 && i + 1 != text.length) {
+        buffer.write(' ');
+      }
+    }
+    return TextEditingValue(
+      text: buffer.toString(),
+      selection: TextSelection.collapsed(offset: buffer.length),
+    );
+  }
+}
+
+class _ExpiryDateFormatter extends TextInputFormatter {
+  @override
+  TextEditingValue formatEditUpdate(
+    TextEditingValue oldValue,
+    TextEditingValue newValue,
+  ) {
+    final text = newValue.text;
+    if (text.length <= 2) {
+      return newValue;
+    }
+    return TextEditingValue(
+      text: '${text.substring(0, 2)}/${text.substring(2)}',
+      selection: TextSelection.collapsed(offset: text.length + 1),
     );
   }
 }

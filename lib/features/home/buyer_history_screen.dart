@@ -1,67 +1,52 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../../../core/constants/app_colors.dart';
-import '../../../data/models/order_model.dart';
+import '../../../data/models/order_history_model.dart';
+import '../../../data/services/mock_api_service.dart';
 
 class BuyerHistoryScreen extends StatefulWidget {
-  const BuyerHistoryScreen({super.key});
+  final int userId;
+
+  const BuyerHistoryScreen({
+    super.key,
+    required this.userId,
+  });
 
   @override
   State<BuyerHistoryScreen> createState() => _BuyerHistoryScreenState();
 }
 
 class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
-  // Моковые данные для проверки
-  final List<Map<String, dynamic>> _mockOrders = [
-    {
-      'id': 1,
-      'idSeller': 1,
-      'numberOrder': 12345,
-      'restaurantName': 'Burger King',
-      'description': 'Воппер комбо с картофелем фри',
-      'compositionOrder': 'Бургер, картофель, напиток',
-      'price': 450.0,
-      'numberReservation': 1,
-      'cookingTime': DateTime.now().subtract(const Duration(hours: 2)),
-      'saleTime': DateTime.now().subtract(const Duration(hours: 1)),
-    },
-    {
-      'id': 2,
-      'idSeller': 1,
-      'numberOrder': 12346,
-      'restaurantName': 'KFC',
-      'description': 'Баскет с крыльями',
-      'compositionOrder': '8 крыльев, соус',
-      'price': 380.0,
-      'numberReservation': 2,
-      'cookingTime': DateTime.now().subtract(const Duration(days: 1)),
-      'saleTime': DateTime.now().subtract(const Duration(days: 1)),
-    },
-    {
-      'id': 3,
-      'idSeller': 1,
-      'numberOrder': 12347,
-      'restaurantName': 'Subway',
-      'description': 'Сэндвич с курицей',
-      'compositionOrder': 'Сэндвич 30см, напиток',
-      'price': 320.0,
-      'numberReservation': 3,
-      'cookingTime': DateTime.now().subtract(const Duration(days: 2)),
-      'saleTime': DateTime.now().subtract(const Duration(days: 2)),
-    },
-    {
-      'id': 4,
-      'idSeller': 1,
-      'numberOrder': 12348,
-      'restaurantName': 'Додо Пицца',
-      'description': 'Пепперони большая',
-      'compositionOrder': 'Пицца 35см',
-      'price': 599.0,
-      'numberReservation': 4,
-      'cookingTime': DateTime.now().subtract(const Duration(days: 3)),
-      'saleTime': DateTime.now().subtract(const Duration(days: 3)),
-    },
-  ];
+  final MockApiService _apiService = MockApiService();
+  List<OrderHistoryModel> _orderHistory = [];
+  bool _isLoading = true;
+  String? _errorMessage;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOrderHistory();
+  }
+
+  Future<void> _loadOrderHistory() async {
+    setState(() {
+      _isLoading = true;
+      _errorMessage = null;
+    });
+
+    try {
+      final history = await _apiService.getUserOrderHistory(widget.userId);
+      setState(() {
+        _orderHistory = history;
+        _isLoading = false;
+      });
+    } catch (e) {
+      setState(() {
+        _errorMessage = 'Ошибка загрузки истории: $e';
+        _isLoading = false;
+      });
+    }
+  }
 
   String _formatDate(DateTime? date) {
     if (date == null) return '';
@@ -110,28 +95,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
               ),
             ),
             Expanded(
-              child: _mockOrders.isEmpty
-                  ? const Center(
-                      child: Text(
-                        'История заказов пуста',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w300,
-                          fontFamily: 'Montserrat',
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      itemCount: _mockOrders.length,
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 15),
-                      itemBuilder: (context, index) {
-                        final orderData = _mockOrders[index];
-                        return _buildOrderCard(orderData);
-                      },
-                    ),
+              child: _buildContent(),
             ),
           ],
         ),
@@ -139,7 +103,78 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
     );
   }
 
-  Widget _buildOrderCard(Map<String, dynamic> orderData) {
+  Widget _buildContent() {
+    if (_isLoading) {
+      return const Center(
+        child: CircularProgressIndicator(
+          color: AppColors.primary,
+        ),
+      );
+    }
+
+    if (_errorMessage != null) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              _errorMessage!,
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.w300,
+                fontFamily: 'Montserrat',
+                color: AppColors.error,
+              ),
+            ),
+            const SizedBox(height: 20),
+            TextButton(
+              onPressed: _loadOrderHistory,
+              child: const Text(
+                'Повторить',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.primary,
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    if (_orderHistory.isEmpty) {
+      return const Center(
+        child: Text(
+          'История заказов пуста',
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w300,
+            fontFamily: 'Montserrat',
+            color: AppColors.textSecondary,
+          ),
+        ),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: _loadOrderHistory,
+      color: AppColors.primary,
+      child: ListView.separated(
+        padding: const EdgeInsets.symmetric(horizontal: 20),
+        itemCount: _orderHistory.length,
+        separatorBuilder: (context, index) => const SizedBox(height: 15),
+        itemBuilder: (context, index) {
+          final historyItem = _orderHistory[index];
+          return _buildOrderCard(historyItem);
+        },
+      ),
+    );
+  }
+
+  Widget _buildOrderCard(OrderHistoryModel historyItem) {
     return Container(
       padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
@@ -152,17 +187,19 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                orderData['restaurantName'] ?? 'Неизвестный ресторан',
-                style: const TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w500,
-                  fontFamily: 'Montserrat',
-                  color: AppColors.textPrimary,
+              Expanded(
+                child: Text(
+                  'Заказ №${historyItem.numberOrder}',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w500,
+                    fontFamily: 'Montserrat',
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
               Text(
-                '${(orderData['price'] as double).toStringAsFixed(0)} ₽',
+                '${historyItem.price.toStringAsFixed(0)} ₽',
                 style: const TextStyle(
                   fontSize: 22,
                   fontWeight: FontWeight.w600,
@@ -173,26 +210,32 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          Text(
-            orderData['description'] ?? '',
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w300,
-              fontFamily: 'Montserrat',
-              color: AppColors.textSecondary,
+          if (historyItem.description != null && historyItem.description!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 5),
+              child: Text(
+                historyItem.description!,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 5),
-          Text(
-            'Состав: ${orderData['compositionOrder'] ?? ""}',
-            style: const TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w300,
-              fontFamily: 'Montserrat',
-              color: AppColors.textSecondary,
+          if (historyItem.compositionOrder != null && historyItem.compositionOrder!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Text(
+                'Состав: ${historyItem.compositionOrder}',
+                style: const TextStyle(
+                  fontSize: 12,
+                  fontWeight: FontWeight.w300,
+                  fontFamily: 'Montserrat',
+                  color: AppColors.textSecondary,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 10),
           Row(
             children: [
               const Icon(
@@ -202,7 +245,7 @@ class _BuyerHistoryScreenState extends State<BuyerHistoryScreen> {
               ),
               const SizedBox(width: 5),
               Text(
-                '${_formatDate(orderData['saleTime'])} в ${_formatTime(orderData['saleTime'])}',
+                '${_formatDate(historyItem.date)} в ${_formatTime(historyItem.date)}',
                 style: const TextStyle(
                   fontSize: 12,
                   fontWeight: FontWeight.w300,
