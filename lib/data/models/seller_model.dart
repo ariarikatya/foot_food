@@ -11,6 +11,7 @@ class SellerModel {
   final int ogrn;
   final String? verification;
   final String? photos;
+  final String phone; // Добавлено поле телефона
 
   SellerModel({
     required this.id,
@@ -24,6 +25,7 @@ class SellerModel {
     required this.ogrn,
     this.verification,
     this.photos,
+    this.phone = '+7 (999) 999-99-99', // Значение по умолчанию
   });
 
   // Из JSON
@@ -40,6 +42,7 @@ class SellerModel {
       ogrn: json['ogrn'] as int,
       verification: json['verification'] as String?,
       photos: json['photos'] as String?,
+      phone: json['phone'] as String? ?? '+7 (999) 999-99-99',
     );
   }
 
@@ -57,6 +60,7 @@ class SellerModel {
       'ogrn': ogrn,
       'verification': verification,
       'photos': photos,
+      'phone': phone,
     };
   }
 
@@ -73,6 +77,7 @@ class SellerModel {
     int? ogrn,
     String? verification,
     String? photos,
+    String? phone,
   }) {
     return SellerModel(
       id: id ?? this.id,
@@ -86,6 +91,7 @@ class SellerModel {
       ogrn: ogrn ?? this.ogrn,
       verification: verification ?? this.verification,
       photos: photos ?? this.photos,
+      phone: phone ?? this.phone,
     );
   }
 

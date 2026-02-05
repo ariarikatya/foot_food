@@ -1,13 +1,12 @@
-# Uncomment this line to define a global platform for your project
-# platform :ios, '13.0'
+# 1. Раскомментируйте эту строку и установите версию 13.0 или выше
+platform :ios, '13.0' 
 
-# CocoaPods analytics sends network stats synchronously affecting flutter build latency.
 ENV['COCOAPODS_DISABLE_STATS'] = 'true'
 
 project 'Runner', {
   'Debug' => :debug,
   'Profile' => :release,
-  'Release' => :release,
+  'Release' => :release, 
 }
 
 def flutter_root
@@ -29,6 +28,8 @@ flutter_ios_podfile_setup
 
 target 'Runner' do
   use_frameworks!
+  # 2. Добавьте эту строку для поддержки модульных заголовков Firebase
+  use_modular_headers! 
 
   flutter_install_all_ios_pods File.dirname(File.realpath(__FILE__))
   target 'RunnerTests' do
@@ -39,5 +40,10 @@ end
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
+    
+    # 3. ДОБАВЬТЕ ЭТОТ БЛОК: он принудительно разрешает немодульные импорты
+    target.build_configurations.each do |config|
+      config.build_settings['CLANG_ALLOW_NON_MODULAR_INCLUDES_IN_FRAMEWORK_MODULES'] = 'YES'
+    end
   end
 end

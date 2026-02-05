@@ -41,6 +41,10 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   final _apiService = MockApiService();
   final _searchController = TextEditingController();
 
+  // Данные пользователя (в реальном приложении из AuthProvider)
+  final int _userId = 1;
+  final String _userName = 'Test User';
+
   List<OrderModel> _orders = [];
   List<OrderModel> _filteredOrders = [];
   bool _isLoading = true;
@@ -224,7 +228,12 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
       // Показываем экран добавления карты
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => const AddCardScreen()),
+        MaterialPageRoute(
+          builder: (context) => AddCardScreen(
+            userId: _userId,
+            userName: _userName,
+          ),
+        ),
       ).then((result) {
         if (result == true) {
           setState(() => _hasCard = true);

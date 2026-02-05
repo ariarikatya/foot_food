@@ -10,10 +10,13 @@ import 'features/auth/password_recovery_screen.dart';
 import 'features/home/buyer_home_with_navigation.dart';
 import 'features/home/seller_home_with_navigation.dart';
 import 'features/home/seller_edit_data_screen.dart';
+import 'core/security/encryption_service.dart';
+import 'core/security/local_storage_service.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
+  await LocalStorageService.init();                 // ⭐ Добавьте
+  await EncryptionService.cleanupExpiredTokens();
   // Настройка системного UI
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(

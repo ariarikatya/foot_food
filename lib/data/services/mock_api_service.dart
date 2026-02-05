@@ -138,6 +138,31 @@ class MockApiService {
     throw Exception('Неверный email или пароль');
   }
 
+  Future<SellerModel> getSellerById(int sellerId) async {
+    await _simulateDelay();
+
+    if (sellerId == _testSeller.id) {
+      return _testSeller;
+    }
+
+    throw Exception('Продавец не найден');
+  }
+
+  Future<void> updateSeller(int sellerId, Map<String, dynamic> data) async {
+    await _simulateDelay();
+    // Имитация обновления данных продавца
+  }
+
+  Future<void> logoutSeller(int sellerId) async {
+    await _simulateDelay();
+    // Имитация выхода продавца
+  }
+
+  Future<void> deleteSeller(int sellerId) async {
+    await _simulateDelay();
+    // Имитация удаления аккаунта продавца
+  }
+
   // ============= ЗАКАЗЫ (Orders) =============
 
   Future<List<OrderModel>> getSellerOrders(int sellerId) async {
@@ -206,6 +231,11 @@ class MockApiService {
         idUser: userId,
       ),
     ];
+  }
+
+  Future<CardModel> addCard(CardModel card) async {
+    await _simulateDelay();
+    return card.copyWith(id: DateTime.now().millisecondsSinceEpoch);
   }
 
   // ============= ИСТОРИЯ ЗАКАЗОВ (Order History) =============

@@ -2,19 +2,11 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<!-- Базовая информация -->
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
 	<string>Foot Food</string>
-	<key>NSPhotoLibraryUsageDescription</key>
-<string>Нужен доступ к фотогалерее для выбора логотипа ресторана</string>
-
-<key>NSCameraUsageDescription</key>
-<string>Нужен доступ к камере для фото логотипа ресторана</string>
-
-<key>NSPhotoLibraryAddUsageDescription</key>
-<string>Нужен доступ для сохранения фотографий</string>
-
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleIdentifier</key>
@@ -54,5 +46,97 @@
 	<true/>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+
+	<!-- ========================================== -->
+	<!-- КРИТИЧНО: Декларация экспортного контроля  -->
+	<!-- ========================================== -->
+	
+	<!-- 
+	ВАЖНО для App Store!
+	
+	false = используем только нативное шифрование iOS (Keychain, CommonCrypto)
+	Это означает, что вам НЕ нужно получать ERN код от США
+	
+	Если поставите true, Apple потребует код экспортного разрешения
+	-->
+	<key>ITSAppUsesNonExemptEncryption</key>
+	<false/>
+
+	<!-- ========================================== -->
+	<!-- Разрешения (Permissions)                   -->
+	<!-- ========================================== -->
+
+	<!-- Камера (для QR и фото логотипа) -->
+	<key>NSCameraUsageDescription</key>
+	<string>Нужен доступ к камере для фото логотипа ресторана и сканирования QR-кодов при получении заказов</string>
+
+	<!-- Фотогалерея (чтение) -->
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Нужен доступ к фотогалерее для выбора логотипа ресторана</string>
+
+	<!-- Фотогалерея (сохранение) -->
+	<key>NSPhotoLibraryAddUsageDescription</key>
+	<string>Нужен доступ для сохранения фотографий</string>
+
+	<!-- Геолокация (для карты ресторанов) -->
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Foot Food использует вашу геолокацию для отображения ближайших ресторанов на карте</string>
+
+	<!-- Face ID / Touch ID (для подтверждения платежей) -->
+	<key>NSFaceIDUsageDescription</key>
+	<string>Foot Food использует Face ID для безопасного подтверждения оплаты</string>
+
+	<!-- ========================================== -->
+	<!-- Push-уведомления                           -->
+	<!-- ========================================== -->
+	<key>UIBackgroundModes</key>
+	<array>
+		<string>remote-notification</string>
+	</array>
+
+	<!-- ========================================== -->
+	<!-- Deep Links (для открытия из ссылок)        -->
+	<!-- ========================================== -->
+	<key>CFBundleURLTypes</key>
+	<array>
+		<dict>
+			<key>CFBundleTypeRole</key>
+			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>com.footfood.app</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>footfood</string>
+			</array>
+		</dict>
+	</array>
+
+	<!-- ========================================== -->
+	<!-- App Transport Security (HTTPS only)        -->
+	<!-- ========================================== -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<!-- Запрещаем HTTP, только HTTPS -->
+		<key>NSAllowsArbitraryLoads</key>
+		<false/>
+		
+		<!-- Разрешаем localhost только для разработки -->
+		<key>NSAllowsLocalNetworking</key>
+		<true/>
+		
+		<!-- 
+		Для разработки можно разрешить HTTP на localhost
+		В PRODUCTION удалите этот блок!
+		-->
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>localhost</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
+
 </dict>
 </plist>

@@ -28,6 +28,9 @@ class OrderHistoryModel {
     required this.price,
   });
 
+  // Геттер для получения основной даты заказа
+  DateTime? get date => bayTime ?? endTime ?? saleTime ?? cookingTime;
+
   // Из JSON
   factory OrderHistoryModel.fromJson(Map<String, dynamic> json) {
     return OrderHistoryModel(

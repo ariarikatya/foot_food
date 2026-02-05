@@ -16,10 +16,13 @@ class SellerHomeWithNavigation extends StatefulWidget {
 class _SellerHomeWithNavigationState extends State<SellerHomeWithNavigation> {
   int _currentIndex = 0;
 
-  final List<Widget> _screens = const [
-    SellerHomeScreen(),
-    SellerCreateFoodboxScreen(),
-    SellerSettingsScreen(),
+  // Данные продавца (в реальном приложении из AuthProvider)
+  final int _sellerId = 1;
+
+  final List<Widget> _screens = [
+    const SellerHomeScreen(),
+    const SellerCreateFoodboxScreen(sellerId: 1),
+    const SellerSettingsScreen(sellerId: 1),
   ];
 
   @override

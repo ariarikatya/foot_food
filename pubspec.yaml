@@ -1,37 +1,129 @@
 name: foot_food
-description: "A new Flutter project."
-publish_to: "none"
-version: 0.1.0
+description: Приложение для заказа и резервирования еды
+publish_to: 'none'
+version: 1.0.0+1
 
 environment:
-  sdk: ^3.9.0
+  sdk: '>=3.0.0 <4.0.0'
 
 dependencies:
   flutter:
     sdk: flutter
+
+  # ============= БЕЗОПАСНОСТЬ И ШИФРОВАНИЕ =============
+  
+  # Безопасное хранение (iOS Keychain / Android Keystore)
+  flutter_secure_storage: ^9.0.0
+  
+  # Биометрическая аутентификация (Face ID / Touch ID / Fingerprint)
+  local_auth: ^2.1.8
+  
+  # Хеширование (SHA-256 для паролей)
+  crypto: ^3.0.3
+  
+  # ============= ЛОКАЛЬНОЕ ХРАНИЛИЩЕ =============
+  
+  # SharedPreferences для настроек
+  shared_preferences: ^2.2.2
+  
+  # ============= СЕТЬ И HTTP =============
+  
+  # HTTP клиент
+  http: ^1.2.0
+  
+  # Dio для более продвинутых HTTP запросов (опционально)
+  # dio: ^5.4.0
+  
+  # ============= ПЛАТЕЖИ (ЮКАССА) =============
+  
+  # WebView для платежных форм ЮКассы
+  webview_flutter: ^4.5.0
+  
+  # URL Launcher для открытия ссылок
+  url_launcher: ^6.2.4
+  
+  # ============= PUSH-УВЕДОМЛЕНИЯ =============
+  
+  # Firebase Cloud Messaging
+  firebase_core: ^2.24.2
+  firebase_messaging: ^14.7.10
+  
+  # Локальные уведомления
+  flutter_local_notifications: ^16.3.2
+  
+  # ============= QR КОДЫ =============
+  
+  # Сканирование QR-кодов
+  mobile_scanner: ^3.5.5
+  
+  # Генерация QR-кодов
+  qr_flutter: ^4.1.0
+  
+  # ============= ГЕОЛОКАЦИЯ =============
+  
+  # Получение координат
+  geolocator: ^10.1.0
   flutter_map: ^6.1.0
   latlong2: ^0.9.0
-  url_launcher: ^6.2.3
-
-  # HTTP клиент для работы с API
-  http: ^1.2.0
-
-  # SVG поддержка
-  flutter_svg: ^2.0.9
-
-  # Выбор изображений из галереи
   image_picker: ^1.0.7
-
-  # Форматирование дат
-  intl: ^0.19.0
-
-  # Хранение настроек (для проверки первого запуска)
-  shared_preferences: ^2.2.2
+  
+  # Разрешения
+  permission_handler: ^11.2.0
+  
+  # ============= UI И ДИЗАЙН =============
+  
+  # Материал дизайн
+  cupertino_icons: ^1.0.6
+  
+  # Google Fonts
+  google_fonts: ^6.1.0
+  
+  # Кастомные иконки
+  flutter_svg: ^2.0.9
+  
+  # Загрузка изображений
+  cached_network_image: ^3.3.1
+  
+  # ============= СОСТОЯНИЕ И НАВИГАЦИЯ =============
+  
+  # State management
+  provider: ^6.1.1
+  
+  # Навигация
+  go_router: ^13.0.1
+  
+  # ============= УТИЛИТЫ =============
+  
+  # Работа с датами
+  intl: ^0.18.1
+  
+  # JSON сериализация
+  json_annotation: ^4.8.1
+  
+  # Device info
+  device_info_plus: ^9.1.1
+  
+  # Package info
+  package_info_plus: ^5.0.1
+  
+  # ============= АНАЛИТИКА (опционально) =============
+  
+  # Firebase Analytics
+  # firebase_analytics: ^10.8.0
+  
+  # Яндекс Метрика
+  # appmetrica_plugin: ^2.0.0
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^5.0.0
+  
+  # Линтер
+  flutter_lints: ^3.0.1
+  
+  # JSON генератор
+  build_runner: ^2.4.7
+  json_serializable: ^6.7.1
 
 flutter:
   uses-material-design: true

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 
+  Network Security Configuration для Android
+  
+  ФАЙЛ РАЗМЕСТИТЬ В:
+  android/app/src/main/res/xml/network_security_config.xml
+  
+  Если папки res/xml нет - создайте её!
+-->
+<network-security-config>
+    
+    <!-- ========================================== -->
+    <!-- Базовая конфигурация (для всех доменов)     -->
+    <!-- ========================================== -->
+    <base-config cleartextTrafficPermitted="false">
+        <!-- 
+        cleartextTrafficPermitted="false" = ТОЛЬКО HTTPS
+        HTTP соединения запрещены для безопасности
+        -->
+        <trust-anchors>
+            <!-- Доверяем системным сертификатам Android -->
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+    
+    <!-- ========================================== -->
+    <!-- LOCALHOST - только для разработки!          -->
+    <!-- ========================================== -->
+    
+    <!-- 
+    ВАЖНО: В PRODUCTION СБОРКЕ УДАЛИТЕ ЭТОТ БЛОК!
+    
+    Разрешаем HTTP только для localhost
+    (для тестирования на эмуляторе/локальном сервере)
+    -->
+    <domain-config cleartextTrafficPermitted="true">
+        <domain includeSubdomains="true">localhost</domain>
+        <domain includeSubdomains="true">10.0.2.2</domain> <!-- Android Emulator -->
+        <domain includeSubdomains="true">127.0.0.1</domain>
+    </domain-config>
+    
+    <!-- ========================================== -->
+    <!-- Certificate Pinning (ОПЦИОНАЛЬНО)           -->
+    <!-- ========================================== -->
+    
+    <!-- 
+    КОГДА У ВАС БУДЕТ ГОТОВ PRODUCTION API:
+    
+    1. Раскомментируйте блок ниже
+    2. Замените "api.footfood.ru" на ваш реальный домен
+    3. Получите хеш сертификата (инструкция ниже)
+    4. Замените "ВАШ_ХЕШ_ЗДЕСЬ" на реальный хеш
+    
+    КАК ПОЛУЧИТЬ ХЕШ СЕРТИФИКАТА:
+    
+    ВАРИАНТ 1 - Через терминал Mac/Linux:
+    
+    openssl s_client -connect api.footfood.ru:443 < /dev/null | \
+    openssl x509 -pubkey -noout | \
+    openssl pkey -pubin -outform der | \
+    openssl dgst -sha256 -binary | \
+    base64
+    
+    ВАРИАНТ 2 - Через браузер (проще):
+    
+    1. Откройте https://api.footfood.ru в Chrome
+    2. Нажмите на замочек → Сертификат
+    3. Экспортируйте сертификат как .cer
+    4. Используйте команду:
+       openssl x509 -in certificate.cer -pubkey -noout | \
+       openssl pkey -pubin -outform der | \
+       openssl dgst -sha256 -binary | \
+       base64
+    
+    ВАРИАНТ 3 - Онлайн (быстро):
+    
+    Используйте сайт: https://www.ssllabs.com/ssltest/
+    Введите ваш домен, получите Pin (SPKI) хеш
+    -->
+    
+    <!--
+    <domain-config cleartextTrafficPermitted="false">
+        <domain includeSubdomains="true">api.footfood.ru</domain>
+        <pin-set expiration="2026-12-31">
+            <pin digest="SHA-256">ВАШ_ХЕШ_СЕРТИФИКАТА_ЗДЕСЬ=</pin>
+            <pin digest="SHA-256">РЕЗЕРВНЫЙ_ХЕШ_ЗДЕСЬ=</pin>
+        </pin-set>
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </domain-config>
+    -->
+    
+    <!-- 
+    ПРИМЕЧАНИЕ:
+    Certificate Pinning НЕ обязателен для первой версии приложения!
+    Можете добавить его позже для повышения безопасности.
+    
+    Без Certificate Pinning у вас всё равно будет:
+    - HTTPS (TLS 1.3)
+    - Проверка сертификатов системой Android
+    - Запрет HTTP соединений
+    
+    Это уже очень безопасно!
+    -->
+
+</network-security-config>
