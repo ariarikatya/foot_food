@@ -30,10 +30,10 @@ class SellerOrderCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: const Color(0xFFFCF8F8),
           borderRadius: BorderRadius.circular(10),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0x59000000),
-              offset: const Offset(4, 8),
+              color: Color(0x59000000),
+              offset: Offset(4, 8),
               blurRadius: 12,
               spreadRadius: 0,
             ),

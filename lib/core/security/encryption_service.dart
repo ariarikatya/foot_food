@@ -6,7 +6,7 @@ import 'dart:math';
 /// Сервис шифрования для Foot Food
 /// Использует нативные средства iOS Keychain и Android Keystore
 class EncryptionService {
-  static final _storage = FlutterSecureStorage(
+  static const _storage = FlutterSecureStorage(
     aOptions: AndroidOptions(
       encryptedSharedPreferences: true,
     ),

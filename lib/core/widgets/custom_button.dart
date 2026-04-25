@@ -36,10 +36,10 @@ class CustomButton extends StatelessWidget {
       height: height ?? AppSpacing.buttonHeight,
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(AppSpacing.radiusLg),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x4D051F20),
-            offset: const Offset(4, 8),
+            color: Color(0x4D051F20),
+            offset: Offset(4, 8),
             blurRadius: 12,
             spreadRadius: 0,
           ),

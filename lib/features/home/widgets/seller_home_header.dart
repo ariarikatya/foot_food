@@ -12,16 +12,16 @@ class SellerHomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.primary,
-        borderRadius: const BorderRadius.only(
+        borderRadius: BorderRadius.only(
           bottomLeft: Radius.circular(10),
           bottomRight: Radius.circular(10),
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 6),
+            color: Color(0x59000000),
+            offset: Offset(0, 6),
             blurRadius: 12,
             spreadRadius: 0,
           ),

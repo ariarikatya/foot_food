@@ -24,7 +24,7 @@ class PhoneInputFormatter extends TextInputFormatter {
     final buffer = StringBuffer('+7 (');
 
     // Первые 3 цифры
-    if (digitsOnly.length >= 1) {
+    if (digitsOnly.isNotEmpty) {
       buffer.write(digitsOnly.substring(0, digitsOnly.length.clamp(0, 3)));
     }
 

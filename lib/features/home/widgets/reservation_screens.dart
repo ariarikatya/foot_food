@@ -61,10 +61,10 @@ class PickupOrderScreen extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(20),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: const Color(0x1A000000),
-                offset: const Offset(0, 4),
+                color: Color(0x1A000000),
+                offset: Offset(0, 4),
                 blurRadius: 12,
               ),
             ],

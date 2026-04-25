@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/constants/app_spacing.dart';
 import '../../../core/widgets/custom_text_field.dart';
 import '../../../core/utils/phone_formatter.dart';
 

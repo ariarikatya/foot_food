@@ -241,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
         alignment: WrapAlignment.center,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text('Еще нет аккаунта? Тогда ', style: AppTextStyles.bodyMedium),
+          const Text('Еще нет аккаунта? Тогда ', style: AppTextStyles.bodyMedium),
           GestureDetector(
             onTap: () {
               Navigator.of(context).pushNamed('/register');

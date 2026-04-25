@@ -82,10 +82,10 @@ class _OrderCardState extends State<OrderCard> {
           decoration: BoxDecoration(
             color: const Color(0xFFFCF8F8),
             borderRadius: BorderRadius.circular(15),
-            boxShadow: [
+            boxShadow: const [
               BoxShadow(
-                color: const Color(0x59051F20),
-                offset: const Offset(4, 8),
+                color: Color(0x59051F20),
+                offset: Offset(4, 8),
                 blurRadius: 12,
                 spreadRadius: 0,
               ),

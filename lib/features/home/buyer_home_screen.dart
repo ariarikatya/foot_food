@@ -50,7 +50,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
   bool _isLoading = true;
   bool _isSearching = false;
   bool _isFilterOpen = false;
-  FilterState _filterState = FilterState();
+  final FilterState _filterState = FilterState();
   bool _hasCard = false; // Симуляция наличия карты
 
   final List<String> _categories = [
@@ -359,7 +359,7 @@ class _BuyerHomeScreenState extends State<BuyerHomeScreen> {
                           onChanged: (value) {
                             setState(() => _filterState.filterNearby = value);
                           },
-                          activeColor: const Color(0xFF7FA29A),
+                          activeThumbColor: const Color(0xFF7FA29A),
                         ),
                       ],
                     ),

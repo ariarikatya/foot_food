@@ -157,7 +157,7 @@ class YookassaService {
 
   /// Генерация заголовка авторизации
   static String _getAuthorizationHeader() {
-    final credentials = '$_shopId:$_secretKey';
+    const credentials = '$_shopId:$_secretKey';
     final bytes = utf8.encode(credentials);
     return base64.encode(bytes);
   }

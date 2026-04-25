@@ -20,7 +20,7 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
   final MapController _mapController = MapController();
 
   // Координаты Перми по умолчанию
-  LatLng _selectedPosition = LatLng(58.0105, 56.2502);
+  LatLng _selectedPosition = const LatLng(58.0105, 56.2502);
   String _selectedAddress = 'Пермь\nулица Революции, 13';
 
   @override
@@ -66,11 +66,11 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
   }
 
   Widget _buildLocationMarker() {
-    return Center(
+    return const Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.location_on, size: 50, color: AppColors.primary),
+          Icon(Icons.location_on, size: 50, color: AppColors.primary),
           // Смещение маркера вверх для точности центра
           SizedBox(height: 25),
         ],
@@ -110,14 +110,14 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
     required VoidCallback onPressed,
   }) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.backgroundWhite,
         shape: BoxShape.circle,
         boxShadow: [
           BoxShadow(
             color: AppColors.shadow,
             blurRadius: 10,
-            offset: const Offset(0, 2),
+            offset: Offset(0, 2),
           ),
         ],
       ),
@@ -154,7 +154,7 @@ class _AddressMapScreenState extends State<AddressMapScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              Text('Адрес вашего ресторана', style: AppTextStyles.h3),
+              const Text('Адрес вашего ресторана', style: AppTextStyles.h3),
               const SizedBox(height: AppSpacing.md),
               Text(_selectedAddress, style: AppTextStyles.bodyLarge),
               const SizedBox(height: AppSpacing.sm),

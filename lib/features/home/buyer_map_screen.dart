@@ -19,33 +19,33 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
 
   // Доступные города
   final List<Map<String, dynamic>> _cities = [
-    {'name': 'Пермь', 'position': LatLng(58.0105, 56.2502)},
-    {'name': 'Казань', 'position': LatLng(55.7958, 49.1068)},
-    {'name': 'Сочи', 'position': LatLng(43.6028, 39.7342)},
-    {'name': 'Уфа', 'position': LatLng(54.7388, 55.9721)},
+    {'name': 'Пермь', 'position': const LatLng(58.0105, 56.2502)},
+    {'name': 'Казань', 'position': const LatLng(55.7958, 49.1068)},
+    {'name': 'Сочи', 'position': const LatLng(43.6028, 39.7342)},
+    {'name': 'Уфа', 'position': const LatLng(54.7388, 55.9721)},
   ];
 
   String? _selectedCity;
-  LatLng _currentCenter = LatLng(58.0105, 56.2502);
+  LatLng _currentCenter = const LatLng(58.0105, 56.2502);
 
   // Примеры ресторанов
   final List<Map<String, dynamic>> _restaurants = [
     {
       'name': 'Тестовый ресторан 1',
       'address': 'Пермь, ул. Революции, 13',
-      'position': LatLng(58.0105, 56.2502),
+      'position': const LatLng(58.0105, 56.2502),
       'available': 3,
     },
     {
       'name': 'Тестовый ресторан 2',
       'address': 'Пермь, ул. Ленина, 50',
-      'position': LatLng(58.0095, 56.2602),
+      'position': const LatLng(58.0095, 56.2602),
       'available': 5,
     },
     {
       'name': 'Тестовый ресторан 3',
       'address': 'Пермь, ул. Сибирская, 24',
-      'position': LatLng(58.0125, 56.2402),
+      'position': const LatLng(58.0125, 56.2402),
       'available': 2,
     },
   ];
@@ -175,10 +175,10 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(8),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0x59000000),
-              offset: const Offset(0, 4),
+              color: Color(0x59000000),
+              offset: Offset(0, 4),
               blurRadius: 8,
             ),
           ],
@@ -190,13 +190,13 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
               setState(() => _selectedFilter = 'Все');
             }),
             const Spacer(),
-            Text(
+            const Text(
               'С foodbox',
               style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.w300,
                 fontFamily: 'Montserrat',
-                color: const Color(0xFF90AAAB),
+                color: Color(0xFF90AAAB),
               ),
             ),
             const Spacer(),
@@ -293,17 +293,17 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
           ),
         ),
         padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Row(
+        child: const Row(
           children: [
             Expanded(
               child: TextField(
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w400,
                   fontFamily: 'Montserrat',
                   color: Colors.black,
                 ),
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   border: InputBorder.none,
                   hintText: '',
                   isDense: true,
@@ -360,7 +360,7 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
                 Switch(
                   value: false,
                   onChanged: (value) {},
-                  activeColor: AppColors.primary,
+                  activeThumbColor: AppColors.primary,
                 ),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.end,
@@ -536,10 +536,10 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
         decoration: BoxDecoration(
           color: AppColors.primary,
           borderRadius: BorderRadius.circular(25),
-          boxShadow: [
+          boxShadow: const [
             BoxShadow(
-              color: const Color(0x59000000),
-              offset: const Offset(0, 4),
+              color: Color(0x59000000),
+              offset: Offset(0, 4),
               blurRadius: 8,
             ),
           ],
@@ -564,10 +564,10 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(15),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 4),
+            color: Color(0x59000000),
+            offset: Offset(0, 4),
             blurRadius: 8,
           ),
         ],
@@ -579,9 +579,9 @@ class _BuyerMapScreenState extends State<BuyerMapScreen> {
           Container(
             height: 45,
             padding: const EdgeInsets.symmetric(horizontal: 15),
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               color: AppColors.primary,
-              borderRadius: const BorderRadius.only(
+              borderRadius: BorderRadius.only(
                 topLeft: Radius.circular(15),
                 topRight: Radius.circular(15),
               ),

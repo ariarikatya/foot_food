@@ -44,12 +44,6 @@ dependencies:
   
   # ============= PUSH-УВЕДОМЛЕНИЯ =============
   
-  # Firebase Cloud Messaging
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.10
-  
-  # Локальные уведомления
-  flutter_local_notifications: ^16.3.2
   
   # ============= QR КОДЫ =============
   
@@ -99,9 +93,6 @@ dependencies:
   
   # JSON сериализация
   json_annotation: ^4.8.1
-  
-  # Device info
-  device_info_plus: ^9.1.1
   
   # Package info
   package_info_plus: ^5.0.1

@@ -9,7 +9,6 @@ import 'features/auth/login_screen.dart';
 import 'features/auth/password_recovery_screen.dart';
 import 'features/home/buyer_home_with_navigation.dart';
 import 'features/home/seller_home_with_navigation.dart';
-import 'features/home/seller_edit_data_screen.dart';
 import 'core/security/encryption_service.dart';
 import 'core/security/local_storage_service.dart';
 

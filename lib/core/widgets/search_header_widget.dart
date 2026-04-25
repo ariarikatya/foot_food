@@ -36,10 +36,10 @@ class SearchHeaderWidget extends StatelessWidget {
                 bottomLeft: Radius.circular(10),
                 bottomRight: Radius.circular(10),
               ),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: const Color(0x59000000),
-            offset: const Offset(0, 6),
+            color: Color(0x59000000),
+            offset: Offset(0, 6),
             blurRadius: 12,
           ),
         ],

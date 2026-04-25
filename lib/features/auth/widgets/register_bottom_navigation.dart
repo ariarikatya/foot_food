@@ -52,11 +52,11 @@ class RegisterBottomNavigation extends StatelessWidget {
             !isBuyer ? selectedIconBottom : unselectedIconBottom,
             onSellerTap,
           ),
-          Positioned(
+          const Positioned(
             bottom: 20,
             left: 45,
             right: 45,
-            child: const Text(
+            child: Text(
               'Нажимая кнопку "Зарегистрироваться", вы соглашаетесь с политикой конфиденциальности...',
               textAlign: TextAlign.center,
               style: TextStyle(

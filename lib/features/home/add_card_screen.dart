@@ -278,7 +278,7 @@ class _AddCardScreenState extends State<AddCardScreen> {
                           _saveCard = value;
                         });
                       },
-                      activeColor: Colors.white,
+                      activeThumbColor: Colors.white,
                       activeTrackColor: AppColors.primary,
                       inactiveThumbColor: Colors.white,
                       inactiveTrackColor: Colors.grey[300],
